@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorQuizWASM.Server", "BlazorQuizWASM\Server\BlazorQuizWASM.Server.csproj", "{C2376EDB-7E18-4568-816C-063FD60332FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorQuizWASM.Server", "BlazorQuizWASM\Server\BlazorQuizWASM.Server.csproj", "{C2376EDB-7E18-4568-816C-063FD60332FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorQuizWASM.Client", "BlazorQuizWASM\Client\BlazorQuizWASM.Client.csproj", "{E6ADECD0-D4FF-47C5-9E8A-CEAF44F7002C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorQuizWASM.Client", "BlazorQuizWASM\Client\BlazorQuizWASM.Client.csproj", "{E6ADECD0-D4FF-47C5-9E8A-CEAF44F7002C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorQuizWASM.Shared", "BlazorQuizWASM\Shared\BlazorQuizWASM.Shared.csproj", "{B0355E61-0387-4CBD-959D-F63D0602BD12}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorQuizWASM.Shared", "BlazorQuizWASM\Shared\BlazorQuizWASM.Shared.csproj", "{B0355E61-0387-4CBD-959D-F63D0602BD12}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

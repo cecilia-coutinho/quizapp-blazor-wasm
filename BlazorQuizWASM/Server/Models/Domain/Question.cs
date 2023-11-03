@@ -10,7 +10,7 @@ namespace BlazorQuizWASM.Server.Models.Domain
         public Guid QuestionId { get; set; }
         
         [Required]
-        public Guid FkUserId { get; set; }
+        public string? FkUserId { get; set; }
 
         [Required]
         public Guid FkFileId { get; set; }

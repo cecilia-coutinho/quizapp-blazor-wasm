@@ -10,7 +10,7 @@ namespace BlazorQuizWASM.Server.Models.Domain
         public Guid QuizItemId { get; set; }
 
         [Required]
-        public Guid FkUserId { get; set; }
+        public string? FkUserId { get; set; }
 
         [Required]
         public Guid FkQuestionId { get; set; }
@@ -27,8 +27,6 @@ namespace BlazorQuizWASM.Server.Models.Domain
         // Navigation properties
         [ForeignKey("FkUserId")]
         public virtual ApplicationUser? ApplicationUsers { get; set; }
-
-        [ForeignKey("FkQuestionId")]
         public virtual Question? Questions { get; set; }
     }
 }

@@ -26,10 +26,6 @@ namespace BlazorQuizWASM.Server.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<ApplicationUser>()
-               .HasIndex(u => u.Nickname)
-               .IsUnique();
-
             modelBuilder.Entity<MediaType>()
                .HasIndex(u => u.Mediatype)
                .IsUnique();
@@ -62,7 +58,8 @@ namespace BlazorQuizWASM.Server.Data
             modelBuilder.Entity<QuizItem>()
             .HasOne(u => u.Questions)
             .WithMany(a => a.QuizItems)
-            .HasForeignKey(u => u.FkQuestionId);
+            .HasForeignKey(u => u.FkQuestionId)
+            .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<QuizItem>()
             .HasOne(u => u.ApplicationUsers)

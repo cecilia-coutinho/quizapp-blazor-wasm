@@ -4,6 +4,7 @@ using BlazorQuizWASM.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlazorQuizWASM.Server.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231103142057_NicknameUsers")]
+    partial class NicknameUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,7 +115,7 @@ namespace BlazorQuizWASM.Server.Data.Migrations
 
                     b.HasIndex("FkQuestionId");
 
-                    b.ToTable("Answers");
+                    b.ToTable("Answer");
                 });
 
             modelBuilder.Entity("BlazorQuizWASM.Server.Models.Domain.MediaFile", b =>
@@ -137,16 +140,13 @@ namespace BlazorQuizWASM.Server.Data.Migrations
 
                     b.Property<string>("MediaFileName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("MediaFileId");
 
                     b.HasIndex("FkMediaTypeId");
 
-                    b.HasIndex("MediaFileName")
-                        .IsUnique();
-
-                    b.ToTable("MediaFiles");
+                    b.ToTable("MediaFile");
                 });
 
             modelBuilder.Entity("BlazorQuizWASM.Server.Models.Domain.MediaType", b =>
@@ -161,10 +161,7 @@ namespace BlazorQuizWASM.Server.Data.Migrations
 
                     b.HasKey("MediaId");
 
-                    b.HasIndex("Mediatype")
-                        .IsUnique();
-
-                    b.ToTable("MediaTypes");
+                    b.ToTable("MediaType");
                 });
 
             modelBuilder.Entity("BlazorQuizWASM.Server.Models.Domain.Question", b =>
@@ -193,7 +190,7 @@ namespace BlazorQuizWASM.Server.Data.Migrations
 
                     b.HasIndex("FkUserId");
 
-                    b.ToTable("Questions");
+                    b.ToTable("Question");
                 });
 
             modelBuilder.Entity("BlazorQuizWASM.Server.Models.Domain.QuizItem", b =>
@@ -212,6 +209,9 @@ namespace BlazorQuizWASM.Server.Data.Migrations
                     b.Property<bool>("IsScored")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("QuestionsQuestionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("Started_At")
                         .HasColumnType("datetime2");
 
@@ -220,11 +220,11 @@ namespace BlazorQuizWASM.Server.Data.Migrations
 
                     b.HasKey("QuizItemId");
 
-                    b.HasIndex("FkQuestionId");
-
                     b.HasIndex("FkUserId");
 
-                    b.ToTable("QuizItems");
+                    b.HasIndex("QuestionsQuestionId");
+
+                    b.ToTable("QuizItem");
                 });
 
             modelBuilder.Entity("Duende.IdentityServer.EntityFramework.Entities.DeviceFlowCodes", b =>
@@ -548,17 +548,15 @@ namespace BlazorQuizWASM.Server.Data.Migrations
 
             modelBuilder.Entity("BlazorQuizWASM.Server.Models.Domain.QuizItem", b =>
                 {
-                    b.HasOne("BlazorQuizWASM.Server.Models.Domain.Question", "Questions")
-                        .WithMany("QuizItems")
-                        .HasForeignKey("FkQuestionId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("BlazorQuizWASM.Server.Models.ApplicationUser", "ApplicationUsers")
                         .WithMany("QuizItems")
                         .HasForeignKey("FkUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("BlazorQuizWASM.Server.Models.Domain.Question", "Questions")
+                        .WithMany("QuizItems")
+                        .HasForeignKey("QuestionsQuestionId");
 
                     b.Navigation("ApplicationUsers");
 

@@ -13,7 +13,7 @@ namespace BlazorQuizWASM.Server.Models.Domain
         public Guid FkUserId { get; set; }
 
         [Required]
-        public Guid FkFilesId { get; set; }
+        public Guid FkFileId { get; set; }
 
         [NotNull]
         public string? Title { get; set; }
@@ -25,7 +25,7 @@ namespace BlazorQuizWASM.Server.Models.Domain
         [ForeignKey("FkUserId")]
         public virtual ApplicationUser? ApplicationUsers { get; set; }
 
-        [ForeignKey("FkFilesId")]
+        [ForeignKey("FkFileId")]
         public virtual MediaFile? MediaFiles { get; set; }
         public List<Answer>? Answers { get; set; }
         public List<QuizItem>? QuizItems { get; set; }

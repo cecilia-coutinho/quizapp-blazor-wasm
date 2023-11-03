@@ -30,7 +30,7 @@ namespace BlazorQuizWASM.Server.Models.Domain
 
         // Navigation properties
         [ForeignKey("FkMediaTypeId")]
-        public virtual MediaType? MediaType { get; set; }
+        public virtual MediaType? MediaTypes { get; set; }
         public List<Question>? Questions { get; set; }
     }
 }

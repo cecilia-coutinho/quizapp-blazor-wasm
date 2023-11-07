@@ -66,6 +66,7 @@ namespace BlazorQuizWASM.Server.Data
             .WithMany(a => a.QuizItems)
             .HasForeignKey(u => u.FkUserId);
 
+            modelBuilder.Seed();
         }
     }
 }

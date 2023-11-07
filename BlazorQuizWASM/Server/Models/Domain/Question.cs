@@ -22,10 +22,7 @@ namespace BlazorQuizWASM.Server.Models.Domain
 
 
         // Navigation properties
-        [ForeignKey("FkUserId")]
         public virtual ApplicationUser? ApplicationUsers { get; set; }
-
-        [ForeignKey("FkFileId")]
         public virtual MediaFile? MediaFiles { get; set; }
         public List<Answer>? Answers { get; set; }
         public List<QuizItem>? QuizItems { get; set; }

@@ -4,6 +4,7 @@ using BlazorQuizWASM.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlazorQuizWASM.Server.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231107154144_UpdateDatabase")]
+    partial class UpdateDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -169,12 +172,12 @@ namespace BlazorQuizWASM.Server.Data.Migrations
                     b.HasData(
                         new
                         {
-                            MediaId = new Guid("b011b874-5d31-40d7-b39b-26b0d36f91bd"),
+                            MediaId = new Guid("e14ef316-a81d-4904-954e-53f4b579f0a2"),
                             Mediatype = "image"
                         },
                         new
                         {
-                            MediaId = new Guid("363d5e07-e18e-4c8f-9103-49e71ce0296d"),
+                            MediaId = new Guid("06c5ae96-6e46-4521-be81-674c8e8b791b"),
                             Mediatype = "video"
                         });
                 });

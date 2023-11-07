@@ -28,6 +28,7 @@ namespace BlazorQuizWASM.Server.Repositories
                 await media.File.CopyToAsync(stream);
             }
 
+
             // https://localhost:1234/images/image.jpg
             var urlFilePath = $"{_contextAccessor?.HttpContext?.Request.Scheme}:" +
                 $"//{_contextAccessor?.HttpContext?.Request.Host}" +

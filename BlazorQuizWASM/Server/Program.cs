@@ -1,11 +1,12 @@
 using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models;
+using BlazorQuizWASM.Server.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Mvc;
+
 
 namespace BlazorQuizWASM
 {
@@ -54,6 +55,8 @@ namespace BlazorQuizWASM
                 options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+            builder.Services.AddScoped<IMediaFileRepository, LocalMediaFileRepository>();
+
             //Password policies
             builder.Services.AddDefaultIdentity<ApplicationUser>(
                 options =>
@@ -74,7 +77,11 @@ namespace BlazorQuizWASM
             builder.Services.AddAuthentication()
                 .AddIdentityServerJwt();
 
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+                });
 
             builder.Services.AddRazorPages();
 

@@ -25,7 +25,6 @@ namespace BlazorQuizWASM.Server.Models.Domain
         public DateTime Started_At { get; set; }
 
         // Navigation properties
-        [ForeignKey("FkUserId")]
         public virtual ApplicationUser? ApplicationUsers { get; set; }
         public virtual Question? Questions { get; set; }
     }

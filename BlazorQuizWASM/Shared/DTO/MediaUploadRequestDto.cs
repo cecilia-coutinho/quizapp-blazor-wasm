@@ -7,7 +7,7 @@ namespace BlazorQuizWASM.Shared.DTO
     public class MediaUploadRequestDto
     {
         [Required]
-        public Guid FkMediaTypeId { get; set; }
+        public string? MediaType { get; set; }
 
         [Required]
         public IFormFile? File { get; set; }

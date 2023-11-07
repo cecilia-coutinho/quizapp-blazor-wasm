@@ -29,4 +29,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.13" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Medias\" />
+  </ItemGroup>
+
 </Project>

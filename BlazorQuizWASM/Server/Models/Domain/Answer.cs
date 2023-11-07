@@ -21,7 +21,6 @@ namespace BlazorQuizWASM.Server.Models.Domain
 
 
         // Navigation properties
-        [ForeignKey("FkQuestionId")]
         public virtual Question? Questions { get; set; }
     }
 }

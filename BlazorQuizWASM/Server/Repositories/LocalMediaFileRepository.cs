@@ -19,7 +19,7 @@ namespace BlazorQuizWASM.Server.Repositories
 
         public async Task<MediaFile> Upload(MediaFile media)
         {
-            var localFilePath = Path.Combine(_environment.ContentRootPath, "Images", $"{media.MediaFileName}{media.FileExtension}");
+            var localFilePath = Path.Combine(_environment.ContentRootPath, "Medias", $"{media.MediaFileName}{media.FileExtension}");
 
             if (media.MediaFileName.Length > 0 && media.File != null)
             {
@@ -32,7 +32,7 @@ namespace BlazorQuizWASM.Server.Repositories
             var urlFilePath = $"{_contextAccessor?.HttpContext?.Request.Scheme}:" +
                 $"//{_contextAccessor?.HttpContext?.Request.Host}" +
                 $"{_contextAccessor?.HttpContext?.Request.PathBase}" +
-                $"/Media/{media.MediaFileName}{media.FileExtension}";
+                $"/Medias/{media.MediaFileName}{media.FileExtension}";
 
             media.FilePath = urlFilePath;
 

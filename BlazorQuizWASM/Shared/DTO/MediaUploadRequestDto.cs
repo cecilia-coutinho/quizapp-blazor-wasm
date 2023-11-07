@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BlazorQuizWASM.Shared.DTO
 {
-    public class ImageUploadRequestDto
+    public class MediaUploadRequestDto
     {
         [Required]
         public Guid FkMediaTypeId { get; set; }

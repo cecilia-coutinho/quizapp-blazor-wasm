@@ -18,14 +18,13 @@ namespace BlazorQuizWASM.Server.Controllers
     public class QuestionsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        //private readonly IQuestionRepository _questionRepository;
-        //private readonly MediaFilesController _mediaFilesController;
+        private readonly IQuestionRepository _questionRepository;
 
-        public QuestionsController(ApplicationDbContext context)
+        public QuestionsController(ApplicationDbContext context, IQuestionRepository questionRepository)
         {
-            //_questionRepository = questionRepository;
-            //_mediaFilesController = mediaFilesController;
+            _questionRepository = questionRepository;
             _context = context;
+            _questionRepository = questionRepository;
         }
 
         // CREATE Question
@@ -60,8 +59,7 @@ namespace BlazorQuizWASM.Server.Controllers
                 FkFileId = mediaEntity?.MediaFileId ?? throw new ArgumentNullException(nameof(mediaEntity), "mediaEntity cannot be null.")
             };
 
-            await _context.Questions.AddAsync(question);
-            await _context.SaveChangesAsync();
+            await _questionRepository.CreateAsync(question);
 
             // map properties
             return Ok(new QuestionRequestDto

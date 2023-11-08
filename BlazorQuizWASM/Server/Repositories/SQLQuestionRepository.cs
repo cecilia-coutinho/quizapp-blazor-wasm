@@ -92,8 +92,6 @@ namespace BlazorQuizWASM.Server.Repositories
             }
 
             var question = await _context.Questions
-                .Include("ApplicationUser")
-                .Include("MediaFile")
                 .FirstOrDefaultAsync(x => x.QuestionId == id);
 
             if (question == null)

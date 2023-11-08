@@ -71,9 +71,9 @@ namespace BlazorQuizWASM.Server.Controllers
         }
 
         // GET questions
-        // GET: api/Questions/titles-user
+        // GET: api/Questions/questions-by-user
         [HttpGet]
-        [Route("titles-user")]
+        [Route("questions-by-user")]
         [Authorize]
         public async Task<ActionResult> GetAll(
             [FromQuery] string? filterOn,
@@ -103,23 +103,22 @@ namespace BlazorQuizWASM.Server.Controllers
         }
 
 
-        //// GET questions by Id
-        //// GET: api/Questions/{id}
-        //[HttpGet("{id}")]
-        //[Route("{id:Guid}")]
-        //public async Task<ActionResult> GetQuestion(Guid id)
-        //{
-        //    var questionDomainModel = await _questionRepository.GetByIdAsync(id);
+        // GET questions by Id
+        // GET: api/Questions/{id}
+        [HttpGet("question/{id}")]
+        public async Task<ActionResult> GetQuestion(Guid id)
+        {
+            var questionDomainModel = await _questionRepository.GetByIdAsync(id);
 
-        //    if (questionDomainModel == null)
-        //    {
-        //        return NotFound();
-        //    }
+            if (questionDomainModel == null)
+            {
+                return NotFound();
+            }
 
-        //    // Map Domain Model to DTO
-        //    return Ok(_mapper
-        //        .Map<QuestionRequestDto>(questionDomainModel));
-        //}
+            var question = questionDomainModel.Title;
+
+            return Ok(new { Question = question });
+        }
 
         //// UPDATE question By Id
         //// PUT: api/Questions/{id}

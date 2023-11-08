@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using BlazorQuizWASM.Server.CustomActionFilters;
 using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
+using BlazorQuizWASM.Server.Repositories;
+using BlazorQuizWASM.Shared.DTO;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazorQuizWASM.Server.Controllers
 {
@@ -15,110 +15,111 @@ namespace BlazorQuizWASM.Server.Controllers
     public class QuestionsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly IQuestionRepository _questionRepository;
 
-        public QuestionsController(ApplicationDbContext context)
+        public QuestionsController(ApplicationDbContext context, IMapper mapper, IQuestionRepository questionRepository)
         {
             _context = context;
+            _mapper = mapper;
+            _questionRepository = questionRepository;
         }
 
+        // CREATE Question
+        //  POST: api/questions
+        [HttpPost]
+        [ValidateModel]
+        //[Authorize]
+        public async Task<ActionResult> CreateQuestion([FromBody] QuestionRequestDto questionRequestDto)
+        {
+            // Map DTO to Domain Model
+            var questionDomainModel = _mapper.Map<Question>(questionRequestDto);
+
+            await _questionRepository.CreateAsync(questionDomainModel);
+
+            return Ok(_mapper
+                .Map<QuestionRequestDto>(questionDomainModel));
+        }
+
+        // GET questions
         // GET: api/Questions
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
+        public async Task<ActionResult> GetAll(
+            [FromQuery] string? filterOn, 
+            [FromQuery] string? filterQuery, 
+            [FromQuery] string? sortBy, [FromQuery] bool? isAscending, 
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
+            )
         {
-          if (_context.Questions == null)
-          {
-              return NotFound();
-          }
-            return await _context.Questions.ToListAsync();
+            var questionDomainModel = await _questionRepository
+                .GetAllAsync(
+                filterOn, 
+                filterQuery, 
+                sortBy, 
+                isAscending ?? true, 
+                pageNumber, 
+                pageSize);
+
+            return Ok(_mapper
+                .Map<List<QuestionRequestDto>>(questionDomainModel));
         }
 
-        // GET: api/Questions/5
+        // GET questions by Id
+        // GET: api/Questions/{id}
         [HttpGet("{id}")]
+        [Route("{id:Guid}")]
         public async Task<ActionResult<Question>> GetQuestion(Guid id)
         {
-          if (_context.Questions == null)
-          {
-              return NotFound();
-          }
-            var question = await _context.Questions.FindAsync(id);
+            var questionDomainModel = await _questionRepository.GetByIdAsync(id);
 
-            if (question == null)
+            if (questionDomainModel == null)
             {
                 return NotFound();
             }
 
-            return question;
+            // Map Domain Model to DTO
+            return Ok(_mapper
+                .Map<QuestionRequestDto>(questionDomainModel));
         }
 
-        // PUT: api/Questions/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutQuestion(Guid id, Question question)
+        // UPDATE question By Id
+        // PUT: api/Questions/{id}
+        [HttpPut]
+        [Route("{id:Guid}")]
+        [ValidateModel]
+        public async Task<IActionResult> Update([FromRoute] Guid id, QuestionRequestDto questionRequestDto)
         {
-            if (id != question.QuestionId)
-            {
-                return BadRequest();
-            }
+            // Map DTO to Domain Model
+            var questionDomainModel = _mapper.Map<Question>(questionRequestDto);
 
-            _context.Entry(question).State = EntityState.Modified;
+            questionDomainModel = await _questionRepository.UpdateAsync(id, questionDomainModel);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!QuestionExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Questions
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Question>> PostQuestion(Question question)
-        {
-          if (_context.Questions == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Questions'  is null.");
-          }
-            _context.Questions.Add(question);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetQuestion", new { id = question.QuestionId }, question);
-        }
-
-        // DELETE: api/Questions/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteQuestion(Guid id)
-        {
-            if (_context.Questions == null)
-            {
-                return NotFound();
-            }
-            var question = await _context.Questions.FindAsync(id);
-            if (question == null)
+            if (questionDomainModel == null)
             {
                 return NotFound();
             }
 
-            _context.Questions.Remove(question);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            // Map Domain Model to DTO
+            return Ok(_mapper
+                .Map<QuestionRequestDto>(questionDomainModel));
         }
 
-        private bool QuestionExists(Guid id)
+        // DELETE question By Id
+        // DELETE: api/Questions/{id}
+        [HttpDelete]
+        [Route("{id:Guid}")]
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
-            return (_context.Questions?.Any(e => e.QuestionId == id)).GetValueOrDefault();
+           var deleteQuestionDomainModel = await _questionRepository.DeleteAsync(id);
+
+            if (deleteQuestionDomainModel == null)
+            {
+                return NotFound();
+            }
+
+            // Map Domain Model to DTO
+            return Ok(_mapper
+                .Map<QuestionRequestDto>(deleteQuestionDomainModel));
         }
     }
 }

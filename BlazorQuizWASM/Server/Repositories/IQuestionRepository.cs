@@ -1,4 +1,5 @@
 ﻿using BlazorQuizWASM.Server.Models.Domain;
+using BlazorQuizWASM.Shared.DTO;
 
 namespace BlazorQuizWASM.Server.Repositories
 {

@@ -21,7 +21,6 @@ namespace BlazorQuizWASM.Server.Controllers
             _mediaFileRepository = mediaFileRepository;
         }
 
-
         // POST: api/MediaFiles/Upload
         [HttpPost]
         [Route("Upload")]

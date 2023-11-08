@@ -1,6 +1,7 @@
 ﻿using BlazorQuizWASM.Server.Controllers;
 using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
+using BlazorQuizWASM.Server.Models;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +50,7 @@ namespace BlazorQuizWASM.Server.Repositories
 
         public async Task<List<Question>> GetAllAsync(string? filterOn = null, string? filterQuery = null, string? sortBy = null, bool isAscending = true, int pageNumber = 1, int pageSize = 1000)
         {
-            var questions = _context?.Questions?.Include("ApplicationUser").Include("MediaFile").AsQueryable();
+            var questions = _context?.Questions?.AsQueryable();
 
             //filtering
             if (string.IsNullOrWhiteSpace(filterOn) == false && string.IsNullOrWhiteSpace(filterQuery) == false)
@@ -77,7 +78,10 @@ namespace BlazorQuizWASM.Server.Repositories
                 throw new Exception("No questions found.");
             }
 
-            return await questions.Skip(skipResults).Take(pageSize).ToListAsync();
+            return await questions
+                .Skip(skipResults)
+                .Take(pageSize)
+                .ToListAsync();
         }
 
         public async Task<Question> GetByIdAsync(Guid id)

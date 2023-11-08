@@ -28,14 +28,13 @@ namespace BlazorQuizWASM.Server.Controllers
         }
 
         // CREATE Question
-        // POST: api/Questions/AddQuestion
+        // POST: api/Questions/upload
         [HttpPost]
-        [Route("Upload")]
+        [Route("upload")]
         [ValidateModel]
         [Authorize]
         public async Task<ActionResult> CreateQuestion([FromForm] QuestionRequestDto questionRequestDto)
         {
-            //Get user id
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // Get uploaded media file
@@ -71,29 +70,38 @@ namespace BlazorQuizWASM.Server.Controllers
 
         }
 
-        //// GET questions
-        //// GET: api/Questions/GetAll
-        //[HttpGet]
-        //[Route("GetAll")]
-        //public async Task<ActionResult> GetAll(
-        //    [FromQuery] string? filterOn,
-        //    [FromQuery] string? filterQuery,
-        //    [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
-        //    [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
-        //    )
-        //{
-        //    var questionDomainModel = await _questionRepository
-        //        .GetAllAsync(
-        //        filterOn,
-        //        filterQuery,
-        //        sortBy,
-        //        isAscending ?? true,
-        //        pageNumber,
-        //        pageSize);
+        // GET questions
+        // GET: api/Questions/titles-user
+        [HttpGet]
+        [Route("titles-user")]
+        [Authorize]
+        public async Task<ActionResult> GetAll(
+            [FromQuery] string? filterOn,
+            [FromQuery] string? filterQuery,
+            [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
+            )
+        {
 
-        //    return Ok(_mapper
-        //        .Map<List<QuestionRequestDto>>(questionDomainModel));
-        //}
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var questionDomainModel = await _questionRepository
+                .GetAllAsync(
+                filterOn,
+                filterQuery,
+                sortBy,
+                isAscending ?? true,
+                pageNumber,
+                pageSize);
+
+            var questions = questionDomainModel
+            .Where(q => q.FkUserId == userId)
+            .Select(q => q.Title)
+            .ToList();
+
+            return Ok(new {Question = questions});
+        }
+
 
         //// GET questions by Id
         //// GET: api/Questions/{id}

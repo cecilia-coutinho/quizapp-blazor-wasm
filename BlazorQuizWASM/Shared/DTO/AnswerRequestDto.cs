@@ -16,5 +16,7 @@ namespace BlazorQuizWASM.Shared.DTO
         [NotNull]
         public bool IsCorrect { get; set; }
 
+        List<string>? AnswersOptions { get; set; }
+
     }
 }

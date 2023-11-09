@@ -120,27 +120,51 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(new { Question = question });
         }
 
-        //// UPDATE question By Id
-        //// PUT: api/Questions/{id}
-        //[HttpPut]
-        //[Route("{id:Guid}")]
-        //[ValidateModel]
-        //public async Task<IActionResult> Update([FromRoute] Guid id, QuestionRequestDto questionRequestDto)
-        //{
-        //    // Map DTO to Domain Model
-        //    var questionDomainModel = _mapper.Map<Question>(questionRequestDto);
+        // UPDATE question By Id
+        // PUT: api/Questions/{id}
+        [HttpPut("question/{id}")]
+        [ValidateModel]
+        [Authorize]
+        public async Task<IActionResult> Update([FromRoute] Guid id, [FromForm] QuestionRequestDto questionRequestDto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        //    questionDomainModel = await _questionRepository.UpdateAsync(id, questionDomainModel);
+            // Get uploaded media file
+            if (_context.MediaFiles == null)
+            {
+                throw new Exception("Entity 'Questions' not found.");
+            }
 
-        //    if (questionDomainModel == null)
-        //    {
-        //        return NotFound();
-        //    }
+            var mediaEntity = await _context.MediaFiles.FirstOrDefaultAsync(mediaFile => mediaFile.MediaFileName == questionRequestDto.MediaFileName);
 
-        //    // Map Domain Model to DTO
-        //    return Ok(_mapper
-        //        .Map<QuestionRequestDto>(questionDomainModel));
-        //}
+            if (_context.Questions == null)
+            {
+                throw new Exception("Entity 'Questions' not found.");
+            }
+
+            Question question = new()
+            {
+                Title = questionRequestDto.Title,
+                FkUserId = userId,
+                FkFileId = mediaEntity?.MediaFileId ?? throw new ArgumentNullException(nameof(mediaEntity), "mediaEntity cannot be null.")
+            };
+
+            var questionDomainModel = await _questionRepository.UpdateAsync(id, question);
+
+            if (questionDomainModel == null)
+            {
+                return NotFound();
+            }
+
+            var updatedQuestionDto = new QuestionRequestDto
+            {
+                Title = questionRequestDto.Title,
+                MediaFileName = questionRequestDto.MediaFileName,
+                Content = questionRequestDto.Content
+            };
+
+            return Ok(updatedQuestionDto);
+        }
 
         //// DELETE question By Id
         //// DELETE: api/Questions/{id}

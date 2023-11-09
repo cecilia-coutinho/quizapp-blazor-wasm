@@ -121,6 +121,7 @@ namespace BlazorQuizWASM.Server.Repositories
             existingQuestion.FkUserId = question.FkUserId;
             existingQuestion.FkFileId = question.FkFileId;
 
+            _context.Entry(existingQuestion).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return existingQuestion;
         }

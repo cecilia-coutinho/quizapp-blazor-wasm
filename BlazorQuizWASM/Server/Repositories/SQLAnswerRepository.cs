@@ -1,22 +1,66 @@
-﻿using BlazorQuizWASM.Server.Models.Domain;
+﻿using BlazorQuizWASM.Server.Data;
+using BlazorQuizWASM.Server.Models.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazorQuizWASM.Server.Repositories
 {
     public class SQLAnswerRepository : IAnswerRepository
     {
-        Task<Answer> IAnswerRepository.CreateAsync(Answer answer)
+        private readonly ApplicationDbContext _context;
+
+        public SQLAnswerRepository(ApplicationDbContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
         }
 
-        Task<Answer?> IAnswerRepository.DeleteAsync(Guid id)
+        public async Task<Answer> CreateAsync(Answer answer)
         {
-            throw new NotImplementedException();
+            if (_context.Answers == null)
+            {
+                throw new Exception("Entity 'Answers' not found.");
+            }
+
+            await _context.Answers.AddAsync(answer);
+            await _context.SaveChangesAsync();
+            return answer;
         }
 
-        Task<List<Answer>> IAnswerRepository.GetAllAsync(string? filterOn, string? filterQuery, string? sortBy, bool isAscending, int pageNumber, int pageSize)
+        public async Task<Answer?> DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            if (_context.Answers == null)
+            {
+                throw new Exception("Entity 'Answers' not found.");
+            }
+
+            var existingAnswer = await _context.Answers.FirstOrDefaultAsync(x => x.AnswerId == id);
+
+            if (existingAnswer == null)
+            {
+                return null;
+            }
+
+            _context.Answers.Remove(existingAnswer);
+            await _context.SaveChangesAsync();
+            return existingAnswer;
+        }
+
+        public async Task<List<Answer>> GetAnswerToQuestionAsync(Guid fkQuestionId)
+        {
+            if (_context.Answers == null)
+            {
+                throw new Exception("Entity 'Answers' not found.");
+            }
+
+            var existingAnswer = await _context.Answers
+                .Where(x => x.FkQuestionId == fkQuestionId)
+                .Select(a => new Answer
+                {
+                    Content= a.Content,
+                    IsCorrect = a.IsCorrect
+                })
+                .ToListAsync();
+
+            return existingAnswer;
         }
     }
 }

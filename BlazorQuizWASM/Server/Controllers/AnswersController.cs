@@ -25,6 +25,7 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // GET: api/Answers/answer-by-question/{question}
         [HttpPost]
+        [ValidateModel]
         [Route("answer-by-question")]
         [Authorize]
         public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] QuestionResponseDto question)
@@ -87,6 +88,7 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // DELETE: api/Answers/delete
         [HttpDelete("delete")]
+        [ValidateModel]
         [Authorize]
         public async Task<IActionResult> DeleteAnswer([FromForm] string question, [FromForm] string answer)
         {

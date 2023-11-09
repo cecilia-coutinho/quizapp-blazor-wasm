@@ -55,6 +55,7 @@ namespace BlazorQuizWASM
 
             builder.Services.AddScoped<IMediaFileRepository, LocalMediaFileRepository>();
             builder.Services.AddScoped<IQuestionRepository, SQLQuestionRepository>();
+            builder.Services.AddScoped<IAnswerRepository, SQLAnswerRepository>();
 
             //Password policies
             builder.Services.AddDefaultIdentity<ApplicationUser>(

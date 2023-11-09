@@ -6,6 +6,6 @@ namespace BlazorQuizWASM.Server.Repositories
     {
         Task<Answer> CreateAsync(Answer answer);
         Task<List<Answer>> GetAnswerToQuestionAsync(Guid fkQuestionId);
-        Task<Answer?> DeleteAsync(Guid id);
+        Task<Answer?> DeleteAsync(string answer, Guid questionId);
     }
 }

@@ -25,14 +25,17 @@ namespace BlazorQuizWASM.Server.Repositories
             return answer;
         }
 
-        public async Task<Answer?> DeleteAsync(Guid id)
+        public async Task<Answer?> DeleteAsync(string answer, Guid questionId)
         {
             if (_context.Answers == null)
             {
                 throw new Exception("Entity 'Answers' not found.");
             }
 
-            var existingAnswer = await _context.Answers.FirstOrDefaultAsync(x => x.AnswerId == id);
+            var existingAnswer = await _context.Answers
+                .Where(q => q.Content == answer && q.FkQuestionId == questionId)
+                .FirstOrDefaultAsync();
+            ;
 
             if (existingAnswer == null)
             {

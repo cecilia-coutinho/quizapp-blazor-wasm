@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BlazorQuizWASM.Shared.DTO
 {
-    public class QuestionResponseDto
+    public class UpdateQuestionRequestDto
     {
         public string? Title { get; set; }
     }

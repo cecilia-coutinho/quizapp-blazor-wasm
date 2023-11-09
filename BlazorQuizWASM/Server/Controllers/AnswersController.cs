@@ -29,7 +29,7 @@ namespace BlazorQuizWASM.Server.Controllers
         [ValidateModel]
         [Route("answer-by-question")]
         [Authorize]
-        public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] QuestionResponseDto question)
+        public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] UpdateQuestionRequestDto question)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -57,7 +57,7 @@ namespace BlazorQuizWASM.Server.Controllers
         [Route("upload")]
         [ValidateModel]
         [Authorize]
-        public async Task<ActionResult> PostAnswer([FromForm] QuestionResponseDto question, [FromForm] AnswerRequestDto answerRequestDto)
+        public async Task<ActionResult> PostAnswer([FromForm] UpdateQuestionRequestDto question, [FromForm] AnswerRequestDto answerRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

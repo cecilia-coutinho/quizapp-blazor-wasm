@@ -1,13 +1,10 @@
-﻿using AutoMapper;
-using Azure.Core;
-using BlazorQuizWASM.Server.CustomActionFilters;
+﻿using BlazorQuizWASM.Server.CustomActionFilters;
 using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.Differencing;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -64,8 +61,7 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(new QuestionRequestDto
             {
                 Title = question.Title,
-                MediaFileName = questionRequestDto.MediaFileName,
-                Content = questionRequestDto.Content
+                MediaFileName = questionRequestDto.MediaFileName
             });
 
         }
@@ -99,7 +95,7 @@ namespace BlazorQuizWASM.Server.Controllers
             .Select(q => q.Title)
             .ToList();
 
-            return Ok(new {Question = questions});
+            return Ok(new { Question = questions });
         }
 
 
@@ -159,8 +155,7 @@ namespace BlazorQuizWASM.Server.Controllers
             var updatedQuestionDto = new QuestionRequestDto
             {
                 Title = questionRequestDto.Title,
-                MediaFileName = questionRequestDto.MediaFileName,
-                Content = questionRequestDto.Content
+                MediaFileName = questionRequestDto.MediaFileName
             };
 
             return Ok(updatedQuestionDto);

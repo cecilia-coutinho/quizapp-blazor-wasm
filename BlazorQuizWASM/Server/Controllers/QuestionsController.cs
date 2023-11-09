@@ -166,22 +166,22 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(updatedQuestionDto);
         }
 
-        //// DELETE question By Id
-        //// DELETE: api/Questions/{id}
-        //[HttpDelete]
-        //[Route("{id:Guid}")]
-        //public async Task<IActionResult> Delete([FromRoute] Guid id)
-        //{
-        //    var deleteQuestionDomainModel = await _questionRepository.DeleteAsync(id);
+        // DELETE question By Id
+        // DELETE: api/Questions/{id}
+        [HttpDelete("question/{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            var deleteQuestionDomainModel = await _questionRepository.DeleteAsync(id);
 
-        //    if (deleteQuestionDomainModel == null)
-        //    {
-        //        return NotFound();
-        //    }
+            if (deleteQuestionDomainModel == null)
+            {
+                return NotFound();
+            }
 
-        //    // Map Domain Model to DTO
-        //    return Ok(_mapper
-        //        .Map<QuestionRequestDto>(deleteQuestionDomainModel));
-        //}
+            var question = deleteQuestionDomainModel.Title;
+
+            return Ok(new { Question = question });
+        }
     }
 }

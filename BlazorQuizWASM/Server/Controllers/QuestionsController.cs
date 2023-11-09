@@ -104,7 +104,7 @@ namespace BlazorQuizWASM.Server.Controllers
 
 
         // GET questions by Id
-        // GET: api/Questions/{id}
+        // GET: api/Questions/question/{id}
         [HttpGet("question/{id}")]
         public async Task<ActionResult> GetQuestion(Guid id)
         {
@@ -121,7 +121,7 @@ namespace BlazorQuizWASM.Server.Controllers
         }
 
         // UPDATE question By Id
-        // PUT: api/Questions/{id}
+        // PUT: api/Questions/question/{id}
         [HttpPut("question/{id}")]
         [ValidateModel]
         [Authorize]
@@ -167,7 +167,7 @@ namespace BlazorQuizWASM.Server.Controllers
         }
 
         // DELETE question By Id
-        // DELETE: api/Questions/{id}
+        // DELETE: api/Questions/question/{id}
         [HttpDelete("question/{id}")]
         [Authorize]
         public async Task<IActionResult> Delete([FromRoute] Guid id)

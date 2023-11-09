@@ -23,7 +23,8 @@ namespace BlazorQuizWASM.Server.Controllers
             _answerRepository = answerRepository;
         }
 
-        // GET: api/Answers/answer-by-question/{question}
+        // GET Answers By Question
+        // POST: api/Answers/answer-by-question
         [HttpPost]
         [ValidateModel]
         [Route("answer-by-question")]
@@ -50,6 +51,7 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(response);
         }
 
+        // CREATE Answer
         // POST: api/Answers/upload
         [HttpPost]
         [Route("upload")]
@@ -86,6 +88,7 @@ namespace BlazorQuizWASM.Server.Controllers
             });
         }
 
+        // DELETE Answer By Question and User (only a user can delete his own answers)
         // DELETE: api/Answers/delete
         [HttpDelete("delete")]
         [ValidateModel]

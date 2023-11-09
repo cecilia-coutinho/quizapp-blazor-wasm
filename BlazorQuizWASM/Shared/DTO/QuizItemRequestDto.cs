@@ -5,6 +5,9 @@ namespace BlazorQuizWASM.Shared.DTO
     public class QuizItemRequestDto
     {
         [NotNull]
+        public string? Nickname { get; set; }
+
+        [NotNull]
         public bool IsScored { get; set; }
 
         [NotNull]

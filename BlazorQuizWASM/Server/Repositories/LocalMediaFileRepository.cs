@@ -57,6 +57,11 @@ namespace BlazorQuizWASM.Server.Repositories
 
             var media = await _dbContext.MediaFiles.FirstOrDefaultAsync(x => x.MediaFileName == MediaFileName);
 
+            if (media == null)
+            {
+                return null;
+            }
+
             return media;
         }
     }

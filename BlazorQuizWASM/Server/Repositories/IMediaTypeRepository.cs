@@ -4,6 +4,6 @@ namespace BlazorQuizWASM.Server.Repositories
 {
     public interface IMediaTypeRepository
     {
-        Task<MediaType?> GetMediaType(string mediaType);
+        Task<MediaType> GetMediaType(string mediaType);
     }
 }

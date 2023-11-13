@@ -33,13 +33,19 @@ namespace BlazorQuizWASM.Server.Controllers
 
             // Get uploaded media file
             var mediaEntity = await _mediaFileRepository.GetMedia(questionRequestDto.MediaFileName);
+            if (mediaEntity == null)
+            {
+              return Problem( "Media Entity not found", statusCode: 500);
+            }
 
             // Create the question
             Question question = new()
             {
-                Title = questionRequestDto.Title,
                 FkUserId = userId,
-                FkFileId = mediaEntity?.MediaFileId ?? throw new ArgumentNullException(nameof(mediaEntity), "mediaEntity cannot be null.")
+                FkFileId = mediaEntity.MediaFileId,
+                Title = questionRequestDto.Title,
+                QuestionPath = questionRequestDto.QuestionPath,
+                TimeLimit = questionRequestDto.TimeLimit
             };
 
             await _questionRepository.CreateAsync(question);
@@ -109,24 +115,34 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // UPDATE question By Id
         // PUT: api/Questions/question/{id}
-        [HttpPut("question/{id}")]
+        [HttpPut("question/{questionPath}")]
         [ValidateModel]
         [Authorize]
-        public async Task<IActionResult> Update([FromRoute] Guid id, [FromForm] QuestionRequestDto questionRequestDto)
+        public async Task<IActionResult> Update(string questionPath, [FromForm] QuestionRequestDto questionRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            //get question Id
+            var requestedQuestion = await _questionRepository.GetQuestionByPath(questionPath);
+            var questionId = requestedQuestion.QuestionId;
+
             // Get uploaded media file
             var mediaEntity = await _mediaFileRepository.GetMedia(questionRequestDto.MediaFileName);
+            if (mediaEntity == null)
+            {
+                return Problem("Media Entity not found", statusCode: 500);
+            }
 
             Question question = new()
             {
                 Title = questionRequestDto.Title,
                 FkUserId = userId,
-                FkFileId = mediaEntity?.MediaFileId ?? throw new ArgumentNullException(nameof(mediaEntity), "mediaEntity cannot be null.")
+                FkFileId = mediaEntity.MediaFileId,
+                QuestionPath = questionRequestDto.QuestionPath,
+                TimeLimit = questionRequestDto.TimeLimit
             };
 
-            var questionDomainModel = await _questionRepository.UpdateAsync(id, question);
+            var questionDomainModel = await _questionRepository.UpdateAsync(questionId, question);
 
             if (questionDomainModel == null)
             {
@@ -136,7 +152,9 @@ namespace BlazorQuizWASM.Server.Controllers
             var updatedQuestionDto = new QuestionRequestDto
             {
                 Title = questionRequestDto.Title,
-                MediaFileName = questionRequestDto.MediaFileName
+                MediaFileName = questionRequestDto.MediaFileName,
+                QuestionPath = questionRequestDto.QuestionPath,
+                TimeLimit = questionRequestDto.TimeLimit
             };
 
             return Ok(updatedQuestionDto);
@@ -144,11 +162,15 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // DELETE question By Id
         // DELETE: api/Questions/question/{id}
-        [HttpDelete("question/{id}")]
+        [HttpDelete("question/{questionPath}")]
         [Authorize]
-        public async Task<IActionResult> Delete([FromRoute] Guid id)
+        public async Task<IActionResult> Delete([FromRoute] string questionPath)
         {
-            var deleteQuestionDomainModel = await _questionRepository.DeleteAsync(id);
+            //get question Id
+            var requestedQuestion = await _questionRepository.GetQuestionByPath(questionPath);
+            var questionId = requestedQuestion.QuestionId;
+
+            var deleteQuestionDomainModel = await _questionRepository.DeleteAsync(questionId);
 
             if (deleteQuestionDomainModel == null)
             {

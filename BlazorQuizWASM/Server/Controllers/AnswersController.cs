@@ -78,12 +78,12 @@ namespace BlazorQuizWASM.Server.Controllers
         [HttpDelete("delete")]
         [ValidateModel]
         [Authorize]
-        public async Task<IActionResult> DeleteAnswer([FromForm] string questionRequest, [FromForm] string answer)
+        public async Task<IActionResult> DeleteAnswer([FromForm] string questionTitle, [FromForm] string answer)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get question id
-            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionRequest, userId);
+            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionTitle, userId);
             var questionId = question.QuestionId;
 
             var deleteAnswerDomainModel = await _answerRepository.DeleteAsync(answer, questionId);

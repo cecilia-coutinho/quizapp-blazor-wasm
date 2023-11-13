@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlazorQuizWASM.Server.Repositories
 {
-    public class SQLMediaTypeRepository
-    {
+    public class SQLMediaTypeRepository : IMediaTypeRepository
+    {   
         private readonly ApplicationDbContext _context;
 
         public SQLMediaTypeRepository(ApplicationDbContext context)

@@ -93,8 +93,9 @@ namespace BlazorQuizWASM.Server.Controllers
         public async Task<ActionResult> GetQuestion(string questionPath)
         {
             var question = await _questionRepository.GetQuestionByPath(questionPath);
+            var questionId = question.QuestionId;
 
-            var questionDomainModel = await _questionRepository.GetByIdAsync(question.QuestionId);
+            var questionDomainModel = await _questionRepository.GetByIdAsync(questionId);
 
             if (questionDomainModel == null)
             {

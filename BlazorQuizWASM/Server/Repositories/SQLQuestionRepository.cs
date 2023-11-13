@@ -93,7 +93,7 @@ namespace BlazorQuizWASM.Server.Repositories
             return question ?? throw new Exception("Question not found.");
         }
 
-        public async Task<Question?> GetQuestionByPath(string questionPath)
+        public async Task<Question> GetQuestionByPath(string questionPath)
         {
             if (_context.Questions == null)
             {

@@ -2,6 +2,7 @@ using BlazorQuizWASM.Client;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor.Services;
 
 namespace BlazorQuizWASM.Client
 {
@@ -18,6 +19,8 @@ namespace BlazorQuizWASM.Client
 
             // Supply HttpClient instances that include access tokens when making requests to the server project
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("BlazorQuizWASM.ServerAPI"));
+
+            builder.Services.AddMudServices();
 
             builder.Services.AddApiAuthorization();
 

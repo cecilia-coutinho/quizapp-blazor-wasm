@@ -18,7 +18,11 @@ namespace BlazorQuizWASM.Server.Models.Domain
         [NotNull]
         public string? Title { get; set; }
 
-        public string? Description { get; set; }
+        [NotNull]
+        public string? QuestionPath { get; set; }
+
+        [NotNull]
+        public int TimeLimit { get; set; }
 
 
         // Navigation properties

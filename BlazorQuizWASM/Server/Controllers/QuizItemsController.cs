@@ -108,7 +108,7 @@ namespace BlazorQuizWASM.Server.Controllers
             QuizItem quizItem = new()
             {
                 IsScored = quizItemRequestDto.IsScored,
-                TimeLimit = quizItemRequestDto.TimeLimit,
+                TimeSpent = quizItemRequestDto.TimeSpent,
                 Started_At = quizItemRequestDto.Started_At,
                 FkUserId = userId,
                 FkQuestionId = question.QuestionId
@@ -123,7 +123,7 @@ namespace BlazorQuizWASM.Server.Controllers
             {
                 Nickname = user?.Nickname,
                 IsScored = quizItem.IsScored,
-                TimeLimit = quizItem.TimeLimit,
+                TimeSpent = quizItem.TimeSpent,
                 Started_At = quizItem.Started_At
             });
         }

@@ -46,7 +46,7 @@ namespace BlazorQuizWASM.Server.Controllers
 
             var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
 
-            var response = answers.Select(a => new { Content = a.Content, IsCorrect = a.IsCorrect });
+            var response = answers.Select(a => new { a.Content, a.IsCorrect });
 
             return Ok(response);
         }

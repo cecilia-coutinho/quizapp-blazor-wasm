@@ -34,6 +34,10 @@ namespace BlazorQuizWASM.Server.Data
                .HasIndex(u => u.MediaFileName)
                .IsUnique();
 
+            modelBuilder.Entity<Question>()
+               .HasIndex(u => u.QuestionPath)
+               .IsUnique();
+
 
             modelBuilder.Entity<MediaFile>()
             .HasOne(u => u.MediaTypes)

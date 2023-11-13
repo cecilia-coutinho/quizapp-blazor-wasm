@@ -1,9 +1,5 @@
-﻿using BlazorQuizWASM.Server.Controllers;
-using BlazorQuizWASM.Server.Data;
+﻿using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
-using BlazorQuizWASM.Server.Models;
-using BlazorQuizWASM.Shared.DTO;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlazorQuizWASM.Server.Repositories
@@ -94,12 +90,21 @@ namespace BlazorQuizWASM.Server.Repositories
             var question = await _context.Questions
                 .FirstOrDefaultAsync(x => x.QuestionId == id);
 
-            if (question == null)
+            return question ?? throw new Exception("Question not found.");
+        }
+
+        public async Task<Question> GetQuestionByPath(string questionPath)
+        {
+            if (_context.Questions == null)
             {
-                throw new Exception("Question not found.");
+                throw new Exception("Entity 'Questions' not found.");
             }
 
-            return question;
+            var question = await _context.Questions
+                .Where(q => q.QuestionPath == questionPath)
+                .FirstOrDefaultAsync();
+
+            return question ?? throw new Exception("Question not found.");
         }
 
         public async Task<Question?> UpdateAsync(Guid id, Question question)
@@ -117,7 +122,8 @@ namespace BlazorQuizWASM.Server.Repositories
             }
 
             existingQuestion.Title = question.Title;
-            existingQuestion.Description = question.Description;
+            existingQuestion.QuestionPath = question.QuestionPath;
+            existingQuestion.TimeLimit = question.TimeLimit;
             existingQuestion.FkUserId = question.FkUserId;
             existingQuestion.FkFileId = question.FkFileId;
 

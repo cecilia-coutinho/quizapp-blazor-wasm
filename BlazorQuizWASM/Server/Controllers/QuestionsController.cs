@@ -61,9 +61,10 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(new QuestionRequestDto
             {
                 Title = question.Title,
-                MediaFileName = questionRequestDto.MediaFileName
+                MediaFileName = questionRequestDto.MediaFileName,
+                QuestionPath = questionRequestDto.QuestionPath,
+                TimeLimit = questionRequestDto.TimeLimit
             });
-
         }
 
         // GET questions
@@ -100,20 +101,22 @@ namespace BlazorQuizWASM.Server.Controllers
 
 
         // GET questions by Id
-        // GET: api/Questions/question/{id}
-        [HttpGet("question/{id}")]
-        public async Task<ActionResult> GetQuestion(Guid id)
+        // GET: api/Questions/question/{questionPath}
+        [HttpGet("question/{questionPath}")]
+        public async Task<ActionResult> GetQuestion(string questionPath)
         {
-            var questionDomainModel = await _questionRepository.GetByIdAsync(id);
+            var question = await _questionRepository.GetQuestionByPath(questionPath);
+
+            var questionDomainModel = await _questionRepository.GetByIdAsync(question.QuestionId);
 
             if (questionDomainModel == null)
             {
                 return NotFound();
             }
 
-            var question = questionDomainModel.Title;
+            var questionTitle = questionDomainModel.Title;
 
-            return Ok(new { Question = question });
+            return Ok(new { Question = questionTitle });
         }
 
         // UPDATE question By Id

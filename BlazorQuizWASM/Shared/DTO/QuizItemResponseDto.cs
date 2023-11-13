@@ -11,7 +11,7 @@ namespace BlazorQuizWASM.Shared.DTO
         public bool IsScored { get; set; }
 
         [NotNull]
-        public int TimeLimit { get; set; }
+        public int TimeSpent { get; set; }
 
         [NotNull]
         public DateTime Started_At { get; set; }

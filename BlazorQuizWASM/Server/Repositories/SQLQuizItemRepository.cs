@@ -1,8 +1,6 @@
 ﻿using BlazorQuizWASM.Server.Data;
-using BlazorQuizWASM.Server.Models;
 using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Shared.DTO;
-using IdentityModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlazorQuizWASM.Server.Repositories
@@ -44,7 +42,7 @@ namespace BlazorQuizWASM.Server.Repositories
                 {
                     Nickname = u.Nickname,
                     IsScored = q.IsScored,
-                    TimeLimit = q.TimeLimit,
+                    TimeSpent = q.TimeSpent,
                     Started_At = q.Started_At
                 })
                 .ToListAsync();
@@ -63,7 +61,7 @@ namespace BlazorQuizWASM.Server.Repositories
                 .Where(x => x.FkUserId == fkUserId)
                 .ToListAsync();
 
-            return existingQuizItem;    
+            return existingQuizItem;
         }
     }
 }

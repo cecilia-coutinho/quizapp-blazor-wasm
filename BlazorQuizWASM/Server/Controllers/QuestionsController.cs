@@ -45,7 +45,8 @@ namespace BlazorQuizWASM.Server.Controllers
                 FkFileId = mediaEntity.MediaFileId,
                 Title = questionRequestDto.Title,
                 QuestionPath = questionRequestDto.QuestionPath,
-                TimeLimit = questionRequestDto.TimeLimit
+                TimeLimit = questionRequestDto.TimeLimit,
+                IsPublished = questionRequestDto.IsPublished
             };
 
             await _questionRepository.CreateAsync(question);
@@ -56,7 +57,8 @@ namespace BlazorQuizWASM.Server.Controllers
                 Title = question.Title,
                 MediaFileName = questionRequestDto.MediaFileName,
                 QuestionPath = questionRequestDto.QuestionPath,
-                TimeLimit = questionRequestDto.TimeLimit
+                TimeLimit = questionRequestDto.TimeLimit,
+                IsPublished = questionRequestDto.IsPublished
             });
         }
 
@@ -64,7 +66,7 @@ namespace BlazorQuizWASM.Server.Controllers
         // GET: api/Questions/
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult> GetAll(
+        public async Task<ActionResult> GetAllPublished(
             [FromQuery] string? filterOn,
             [FromQuery] string? filterQuery,
             [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
@@ -81,8 +83,9 @@ namespace BlazorQuizWASM.Server.Controllers
                 pageSize);
 
             var questions = questionDomainModel
-            .Select(q => q.Title)
-            .ToList();
+                .Where(q => q.IsPublished == true)
+                .Select(q => q.Title)
+                .ToList();
 
             return Ok(new { Question = questions });
         }
@@ -168,7 +171,8 @@ namespace BlazorQuizWASM.Server.Controllers
                 FkUserId = userId,
                 FkFileId = mediaEntity.MediaFileId,
                 QuestionPath = questionRequestDto.QuestionPath,
-                TimeLimit = questionRequestDto.TimeLimit
+                TimeLimit = questionRequestDto.TimeLimit,
+                IsPublished = questionRequestDto.IsPublished
             };
 
             var questionDomainModel = await _questionRepository.UpdateAsync(questionId, question);
@@ -183,7 +187,8 @@ namespace BlazorQuizWASM.Server.Controllers
                 Title = questionRequestDto.Title,
                 MediaFileName = questionRequestDto.MediaFileName,
                 QuestionPath = questionRequestDto.QuestionPath,
-                TimeLimit = questionRequestDto.TimeLimit
+                TimeLimit = questionRequestDto.TimeLimit,
+                IsPublished = questionRequestDto.IsPublished
             };
 
             return Ok(updatedQuestionDto);

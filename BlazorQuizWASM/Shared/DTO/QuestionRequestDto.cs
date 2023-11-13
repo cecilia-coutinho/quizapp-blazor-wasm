@@ -20,5 +20,8 @@ namespace BlazorQuizWASM.Shared.DTO
         [NotNull]
         [Range(1, 45, ErrorMessage = "The time limit must be between 1 and 45min.")]
         public int TimeLimit { get; set; }
+
+        [NotNull]
+        public bool IsPublished { get; set; } = false;
     }
 }

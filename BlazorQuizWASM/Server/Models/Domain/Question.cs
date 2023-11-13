@@ -24,6 +24,10 @@ namespace BlazorQuizWASM.Server.Models.Domain
         [NotNull]
         public int TimeLimit { get; set; }
 
+        [NotNull]
+        public bool IsPublished { get; set; }
+
+
 
         // Navigation properties
         public virtual ApplicationUser? ApplicationUsers { get; set; }

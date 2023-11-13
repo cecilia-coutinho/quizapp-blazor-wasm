@@ -138,6 +138,7 @@ namespace BlazorQuizWASM.Server.Repositories
             existingQuestion.Title = question.Title;
             existingQuestion.QuestionPath = question.QuestionPath;
             existingQuestion.TimeLimit = question.TimeLimit;
+            existingQuestion.IsPublished = question.IsPublished;
             existingQuestion.FkUserId = question.FkUserId;
             existingQuestion.FkFileId = question.FkFileId;
 

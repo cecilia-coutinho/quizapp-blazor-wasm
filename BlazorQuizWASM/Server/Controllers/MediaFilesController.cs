@@ -1,5 +1,4 @@
-﻿using BlazorQuizWASM.Server.Data;
-using BlazorQuizWASM.Server.Models.Domain;
+﻿using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Mvc;
@@ -84,7 +83,7 @@ namespace BlazorQuizWASM.Server.Controllers
             }
 
             var mediaType = await _mediaTypeRepository.GetMediaType(request.MediaType);
-            return mediaType?.MediaId ?? Guid.Empty;   
+            return mediaType?.MediaId ?? Guid.Empty;
         }
     }
 }

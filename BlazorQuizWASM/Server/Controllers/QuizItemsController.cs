@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
+using BlazorQuizWASM.Server.Repositories;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using BlazorQuizWASM.Shared.DTO;
+using BlazorQuizWASM.Server.CustomActionFilters;
 
 namespace BlazorQuizWASM.Server.Controllers
 {
@@ -15,110 +20,112 @@ namespace BlazorQuizWASM.Server.Controllers
     public class QuizItemsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IQuizItemRepository _quizItemRepository;
 
-        public QuizItemsController(ApplicationDbContext context)
+        public QuizItemsController(ApplicationDbContext context, IQuizItemRepository quizItemRepository)
         {
             _context = context;
+            _quizItemRepository = quizItemRepository;
         }
 
-        // GET: api/QuizItems
+        // GET: api/QuizItems/score
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<QuizItem>>> GetQuizItems()
+        [Route("score")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<QuizItem>>> GetScore()
         {
-          if (_context.QuizItems == null)
-          {
-              return NotFound();
-          }
-            return await _context.QuizItems.ToListAsync();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Problem(detail: "Could not fetch user", statusCode: 500);
+            }
+
+            var scores = await _quizItemRepository.GetScore(userId);
+
+            foreach (var score in scores)
+            {
+                // get only isScored == true
+                if (score.IsScored == false)
+                {
+                    scores.Remove(score);
+                }            
+            }
+
+            var userScore = scores.Count();
+
+            return Ok(userScore);
         }
 
-        // GET: api/QuizItems/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<QuizItem>> GetQuizItem(Guid id)
+        // GET: api/QuizItems/participants
+        [HttpGet]
+        [Route("participants")]
+        [Authorize]
+        public async Task<ActionResult<QuizItem>> GetParticipantsPerQuestion([FromForm] UpdateQuestionRequestDto updateQuestionRequestDto)
         {
-          if (_context.QuizItems == null)
-          {
-              return NotFound();
-          }
-            var quizItem = await _context.QuizItems.FindAsync(id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (quizItem == null)
+            // Get Question Id
+            if (_context.Questions == null)
             {
-                return NotFound();
+                throw new Exception("Entity 'Questions' not found.");
             }
 
-            return quizItem;
-        }
+            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.Title);
 
-        // PUT: api/QuizItems/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutQuizItem(Guid id, QuizItem quizItem)
-        {
-            if (id != quizItem.QuizItemId)
+            if (question == null)
             {
-                return BadRequest();
+                return NotFound("This question does not exist. Please check your input data and try again.");
             }
 
-            _context.Entry(quizItem).State = EntityState.Modified;
+            var quizItem = await _quizItemRepository.GetParticipantsPerQuestionAsync(question.QuestionId);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!QuizItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return Ok(quizItem);
         }
 
         // POST: api/QuizItems
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<QuizItem>> PostQuizItem(QuizItem quizItem)
+        [Route("upload")]
+        [ValidateModel]
+        [Authorize]
+        public async Task<ActionResult<QuizItem>> Upload([FromForm] QuizItemRequestDto quizItemRequestDto, [FromForm] UpdateQuestionRequestDto updateQuestionRequestDto )
         {
-          if (_context.QuizItems == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.QuizItems'  is null.");
-          }
-            _context.QuizItems.Add(quizItem);
-            await _context.SaveChangesAsync();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return CreatedAtAction("GetQuizItem", new { id = quizItem.QuizItemId }, quizItem);
-        }
-
-        // DELETE: api/QuizItems/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteQuizItem(Guid id)
-        {
-            if (_context.QuizItems == null)
+            // Get Question Id
+            if (_context.Questions == null)
             {
-                return NotFound();
-            }
-            var quizItem = await _context.QuizItems.FindAsync(id);
-            if (quizItem == null)
-            {
-                return NotFound();
+                throw new Exception("Entity 'Questions' not found.");
             }
 
-            _context.QuizItems.Remove(quizItem);
-            await _context.SaveChangesAsync();
+            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.Title);
 
-            return NoContent();
-        }
+            if (question == null)
+            {
+                return NotFound("This question does not exist. Please check your input data and try again.");
+            }
 
-        private bool QuizItemExists(Guid id)
-        {
-            return (_context.QuizItems?.Any(e => e.QuizItemId == id)).GetValueOrDefault();
+            QuizItem quizItem = new()
+            {
+                IsScored = quizItemRequestDto.IsScored,
+                TimeLimit = quizItemRequestDto.TimeLimit,
+                Started_At = quizItemRequestDto.Started_At,
+                FkUserId = userId,
+                FkQuestionId = question.QuestionId
+            };
+
+            await _quizItemRepository.CreateAsync(quizItem);
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            return Ok( new QuizItemResponseDto 
+            {
+                Nickname = user?.Nickname,
+                IsScored = quizItem.IsScored,
+                TimeLimit = quizItem.TimeLimit,
+                Started_At = quizItem.Started_At
+            });
         }
     }
 }

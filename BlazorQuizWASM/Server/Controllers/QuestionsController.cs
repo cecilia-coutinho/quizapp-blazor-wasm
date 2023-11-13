@@ -1,11 +1,9 @@
 ﻿using BlazorQuizWASM.Server.CustomActionFilters;
-using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BlazorQuizWASM.Server.Controllers
@@ -14,14 +12,13 @@ namespace BlazorQuizWASM.Server.Controllers
     [ApiController]
     public class QuestionsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly IQuestionRepository _questionRepository;
+        private readonly IMediaFileRepository _mediaFileRepository;
 
-        public QuestionsController(ApplicationDbContext context, IQuestionRepository questionRepository)
+        public QuestionsController(IQuestionRepository questionRepository, IMediaFileRepository mediaFileRepository)
         {
             _questionRepository = questionRepository;
-            _context = context;
-            _questionRepository = questionRepository;
+            _mediaFileRepository = mediaFileRepository;
         }
 
         // CREATE Question
@@ -35,19 +32,9 @@ namespace BlazorQuizWASM.Server.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // Get uploaded media file
-            if (_context.MediaFiles == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
-
-            var mediaEntity = await _context.MediaFiles.FirstOrDefaultAsync(mediaFile => mediaFile.MediaFileName == questionRequestDto.MediaFileName);
+            var mediaEntity = await _mediaFileRepository.GetMedia(questionRequestDto.MediaFileName);
 
             // Create the question
-            if (_context.Questions == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
-
             Question question = new()
             {
                 Title = questionRequestDto.Title,
@@ -129,17 +116,7 @@ namespace BlazorQuizWASM.Server.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // Get uploaded media file
-            if (_context.MediaFiles == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
-
-            var mediaEntity = await _context.MediaFiles.FirstOrDefaultAsync(mediaFile => mediaFile.MediaFileName == questionRequestDto.MediaFileName);
-
-            if (_context.Questions == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
+            var mediaEntity = await _mediaFileRepository.GetMedia(questionRequestDto.MediaFileName);
 
             Question question = new()
             {

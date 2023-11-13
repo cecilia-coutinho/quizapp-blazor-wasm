@@ -1,5 +1,7 @@
 ﻿using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
+using BlazorQuizWASM.Shared.DTO;
+using Microsoft.EntityFrameworkCore;
 using System.Drawing;
 
 namespace BlazorQuizWASM.Server.Repositories
@@ -43,6 +45,17 @@ namespace BlazorQuizWASM.Server.Repositories
                 await _dbContext.MediaFiles.AddAsync(media);
                 await _dbContext.SaveChangesAsync();
             }
+
+            return media;
+        }
+        public async Task<MediaFile?> GetMedia(string MediaFileName)
+        {
+            if (_dbContext.MediaFiles == null)
+            {
+                throw new Exception("Entity 'MediaFiles' not found.");
+            }
+
+            var media = await _dbContext.MediaFiles.FirstOrDefaultAsync(x => x.MediaFileName == MediaFileName);
 
             return media;
         }

@@ -14,13 +14,13 @@ namespace BlazorQuizWASM.Server.Controllers
     [ApiController]
     public class AnswersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly IAnswerRepository _answerRepository;
+        private readonly IQuestionRepository _questionRepository;
 
-        public AnswersController(ApplicationDbContext context, IAnswerRepository answerRepository)
+        public AnswersController(IAnswerRepository answerRepository, IQuestionRepository questionRepository)
         {
-            _context = context;
             _answerRepository = answerRepository;
+            _questionRepository = questionRepository;
         }
 
         // GET Answers By Question
@@ -29,23 +29,15 @@ namespace BlazorQuizWASM.Server.Controllers
         [ValidateModel]
         [Route("answer-by-question")]
         [Authorize]
-        public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] UpdateQuestionRequestDto question)
+        public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] UpdateQuestionRequestDto questionRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // Get question id
-            if (_context.Questions == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
-
-            var questionId = await _context.Questions
-                .Where(q => q.Title == question.Title && q.FkUserId == userId)
-                .Select(q => q.QuestionId)
-                .FirstOrDefaultAsync();
+            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionRequestDto.Title, userId);
+            var questionId = question.QuestionId;
 
             var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
-
             var response = answers.Select(a => new { a.Content, a.IsCorrect });
 
             return Ok(response);
@@ -57,20 +49,13 @@ namespace BlazorQuizWASM.Server.Controllers
         [Route("upload")]
         [ValidateModel]
         [Authorize]
-        public async Task<ActionResult> PostAnswer([FromForm] UpdateQuestionRequestDto question, [FromForm] AnswerRequestDto answerRequestDto)
+        public async Task<ActionResult> PostAnswer([FromForm] UpdateQuestionRequestDto questionRequestDto, [FromForm] AnswerRequestDto answerRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get question id
-            if (_context.Questions == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
-
-            var questionId = await _context.Questions
-                .Where(q => q.Title == question.Title && q.FkUserId == userId)
-                .Select(q => q.QuestionId)
-                .FirstOrDefaultAsync();
+            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionRequestDto.Title, userId);
+            var questionId = question.QuestionId;
 
             var answer = new Answer
             {
@@ -93,29 +78,17 @@ namespace BlazorQuizWASM.Server.Controllers
         [HttpDelete("delete")]
         [ValidateModel]
         [Authorize]
-        public async Task<IActionResult> DeleteAnswer([FromForm] string question, [FromForm] string answer)
+        public async Task<IActionResult> DeleteAnswer([FromForm] string questionRequest, [FromForm] string answer)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get question id
-            if (_context.Questions == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
-
-            var questionId = await _context.Questions
-                .Where(q => q.Title == question && q.FkUserId == userId)
-                .Select(q => q.QuestionId)
-                .FirstOrDefaultAsync();
+            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionRequest, userId);
+            var questionId = question.QuestionId;
 
             var deleteAnswerDomainModel = await _answerRepository.DeleteAsync(answer, questionId);
 
-            if (deleteAnswerDomainModel == null)
-            {
-                return NotFound();
-            }
-
-            var answerDeleted = deleteAnswerDomainModel.Content;
+            var answerDeleted = deleteAnswerDomainModel?.Content;
 
             return Ok(new { Answer = answerDeleted });
         }

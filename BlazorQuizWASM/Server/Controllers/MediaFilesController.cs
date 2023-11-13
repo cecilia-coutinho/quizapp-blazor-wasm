@@ -11,14 +11,13 @@ namespace BlazorQuizWASM.Server.Controllers
     [ApiController]
     public class MediaFilesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-
         private readonly IMediaFileRepository _mediaFileRepository;
+        private readonly IMediaTypeRepository _mediaTypeRepository;
 
-        public MediaFilesController(IMediaFileRepository mediaFileRepository, ApplicationDbContext context)
+        public MediaFilesController(IMediaFileRepository mediaFileRepository, IMediaTypeRepository mediaTypeRepository)
         {
-            _context = context;
             _mediaFileRepository = mediaFileRepository;
+            _mediaTypeRepository = mediaTypeRepository;
         }
 
         // POST: api/MediaFiles/Upload
@@ -79,29 +78,13 @@ namespace BlazorQuizWASM.Server.Controllers
 
         private async Task<Guid> GetMediaTypeIdFromRequest(MediaUploadRequestDto request)
         {
-            if (_context.MediaTypes == null)
+            if (request.MediaType == null)
             {
-                throw new Exception("_context.MediaTypes is null. Handle this case appropriately.");
+                throw new ArgumentNullException(nameof(request));
             }
 
-            if (request.MediaType == "image")
-            {
-                var media = await _context.MediaTypes.SingleOrDefaultAsync(mt => mt.Mediatype == "image");
-
-                return media?.MediaId ?? Guid.Empty;
-
-            }
-            else if (request.MediaType == "video")
-            {
-                var media = await _context.MediaTypes.SingleOrDefaultAsync(mt => mt.Mediatype == "Video");
-
-                return media?.MediaId ?? Guid.Empty;
-            }
-            else
-            {
-                throw new ArgumentException("Invalid media type in request");
-            }
-            
+            var mediaType = await _mediaTypeRepository.GetMediaType(request.MediaType);
+            return mediaType?.MediaId ?? Guid.Empty;   
         }
     }
 }

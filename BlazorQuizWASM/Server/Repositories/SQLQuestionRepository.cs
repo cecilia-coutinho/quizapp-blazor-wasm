@@ -13,7 +13,7 @@ namespace BlazorQuizWASM.Server.Repositories
             _context = context;
         }
 
-        public async Task<Question> CreateAsync(Question question)
+        public async Task<Question?> CreateAsync(Question question)
         {
             if (_context.Questions == null)
             {
@@ -80,7 +80,7 @@ namespace BlazorQuizWASM.Server.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Question> GetByIdAsync(Guid id)
+        public async Task<Question?> GetByIdAsync(Guid id)
         {
             if (_context.Questions == null)
             {
@@ -93,7 +93,7 @@ namespace BlazorQuizWASM.Server.Repositories
             return question ?? throw new Exception("Question not found.");
         }
 
-        public async Task<Question> GetQuestionByPath(string questionPath)
+        public async Task<Question?> GetQuestionByPath(string questionPath)
         {
             if (_context.Questions == null)
             {
@@ -102,6 +102,20 @@ namespace BlazorQuizWASM.Server.Repositories
 
             var question = await _context.Questions
                 .Where(q => q.QuestionPath == questionPath)
+                .FirstOrDefaultAsync();
+
+            return question ?? throw new Exception("Question not found.");
+        }
+
+        public async Task<Question> GetQuestionByTitleAndUserAsync(string? title, string? fkUserId)
+        {
+            if (_context.Questions == null)
+            {
+                throw new Exception("Entity 'Questions' not found.");
+            }
+
+            var question = await _context.Questions
+                .Where(q => q.Title == title && q.FkUserId == fkUserId)
                 .FirstOrDefaultAsync();
 
             return question ?? throw new Exception("Question not found.");

@@ -1,14 +1,38 @@
 ﻿@using BlazorQuizWASM.Shared.DTO
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using System.Text.Json;
+@using System.Text;
+@using System.Net;
+@using Microsoft.AspNetCore.Http;
+@using System.IO;
+@using System.Collections.Generic;
+@using System.Net.Http.Headers;
+@inject HttpClient _http;
+@inject NavigationManager _navigationManager;
 
 <MudGrid>
     <MudItem xs="12" sm="7">
         <MudPaper Class="pa-4">
-            <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors" @bind-Value="@media">
-                <MudTextField T="string" Label="MediaFileName" Required="true" RequiredError="Media File Name Required!" />
+            <MudForm
+                Model="mediaModel"
+                @ref="form" 
+                @bind-IsValid="@success" 
+                @bind-Errors="@errors" >
 
-                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                <MudTextField 
+                    @bind-Value="@mediaModel.MediaFileName"
+                    For="@(() => mediaModel.MediaFileName)"
+                    T="string" 
+                    Label="File Name"
+                    Required="true" 
+                    RequiredError="Media File Name Required!" />
+
+                <MudFileUpload 
+                    @bind-Value="@mediaModel.File"
+                    T="IBrowserFile" 
+                    FilesChanged="UploadFiles"
+                    OnChanged="SaveFile">
                     <ButtonTemplate>
                         <MudButton HtmlTag="label"
                                    Variant="Variant.Filled"
@@ -21,16 +45,20 @@
                 </MudFileUpload>
 
                 <div class="d-flex">
-                    <MudRadioGroup T="string" Required="true" RequiredError="Media type is required!">
+                    <MudRadioGroup 
+                        @bind-Value="@mediaModel.MediaType"
+                        For="@(() => mediaModel.MediaType)"
+                        T="string" 
+                        Required="true" 
+                        RequiredError="Media type is required!">
                         <MudRadio Option="@("image")">Image</MudRadio>
                         <MudRadio Option="@("video")">Video</MudRadio>
                     </MudRadioGroup>
                 </div>
 
                 <div class="d-flex align-center justify-space-between">
-                    <MudCheckBox T="bool" Required="true" RequiredError="You must agree" Label="I agree!" />
-
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!success)" Class="ml-auto">Send</MudButton>
+                    <MudButton 
+                        Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!success)" Class="ml-auto" OnClick="UploadFileAsync">Send</MudButton>
 
                     <MudButton Variant="Variant.Filled" Color="Color.Secondary" DisableElevation="true" OnClick="@(()=>form.ResetAsync())" Class="mx-2">Reset</MudButton>
                 </div>
@@ -64,19 +92,74 @@
 }
 
 @code {
-
     bool success;
     string[] errors = { };
-    MudTextField<string> pwField1;
+    MudTextField<string>? pwField1;
     MudForm form;
+    string? APIErrorMessage;
+    private bool isLoading;
 
     IList<IBrowserFile> files = new List<IBrowserFile>();
+
     private void UploadFiles(IBrowserFile file)
     {
         files.Add(file);
     }
 
-    MediaUploadRequestDto media = new MediaUploadRequestDto();
+    // private async Task SaveFile(InputFileChangeEventArgs e)
+    // {
+
+    //     using var content = new MultipartFormDataContent();
+    //     foreach (var file in e.GetMultipleFiles(1))
+    //     {
+    //         var fileContent = new StreamContent(file.OpenReadStream());
+    //         fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+    //         files.Add(file);
+    //         content.Add(
+    //             content: fileContent,
+    //             name: "\"files\"",
+    //             fileName: file.Name
+    //         );
+    //     }
+
+    // }
+
+
+    MediaUploadRequestDto mediaModel = new MediaUploadRequestDto();
+
+    private async Task UploadFileAsync()
+    {
+        if (files.Count > 0)
+        {
+            isLoading = true;
+            //files.Clear();
+            await form.Validate();
+
+            if (form.IsValid)
+            {
+                var formFile = (IFormFile?)Convert.ChangeType(files.FirstOrDefault(), typeof(IFormFile));
+                mediaModel.File = formFile;
+
+                var jsonPayload = JsonSerializer.Serialize(mediaModel);
+                var requestContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                var response = await _http.PostAsync("api/mediafiles/upload", requestContent);
+
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    isLoading = false;
+                    success = false;
+                    APIErrorMessage = "Error to fetch";
+                    throw new Exception(APIErrorMessage);
+                }
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    isLoading = false;
+                    success = true;
+                }
+            }
+        }
+    }
 }
 
 

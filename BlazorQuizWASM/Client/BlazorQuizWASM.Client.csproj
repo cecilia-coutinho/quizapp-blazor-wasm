@@ -18,8 +18,4 @@
     <ProjectReference Include="..\Shared\BlazorQuizWASM.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Shared\Components\" />
-  </ItemGroup>
-
 </Project>

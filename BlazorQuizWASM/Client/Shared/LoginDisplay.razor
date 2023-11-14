@@ -3,14 +3,39 @@
 @inject NavigationManager Navigation
 
 <AuthorizeView>
+
     <Authorized>
-        <MudLink Color="Color.Default" Underline="Underline.None" Href="authentication/profile">Hello, @context.User.Identity?.Name!</MudLink>
-        <MudButton Color="Color.Default" @onclick="BeginLogOut">Log out</MudButton>
+        <MudLink Style="padding: 15px;"
+                 Color="Color.Tertiary" 
+                 Underline="Underline.None" 
+                 Href="authentication/profile">
+                 Hello, @context.User.Identity?.Name!
+        </MudLink>
+
+        <MudButton 
+            Style="background-color: yellowgreen; color: white; margin-top: 5px;" 
+            Variant="Variant.Filled" @onclick="BeginLogOut">
+            Log out
+        </MudButton>
     </Authorized>
+
     <NotAuthorized>
-        <MudLink Color="Color.Default" Underline="Underline.None" Href="authentication/register">Register</MudLink>
-        <MudLink Color="Color.Default" Underline="Underline.None" Href="authentication/login">Log in</MudLink>
+        <MudButton 
+            Style="background-color: yellowgreen; color: white; margin-top: 10px; margin-right: 5px;" 
+            Variant="Variant.Filled" 
+            Href="authentication/register">
+            Register
+        </MudButton>
+
+        <MudButton 
+            Style="background-color: yellowgreen; color: white; margin-top: 10px; margin-right: 5px;"
+            Variant="Variant.Filled" 
+            Color="Color.Tertiary" 
+            Href="authentication/login">
+            Log in
+        </MudButton>
     </NotAuthorized>
+
 </AuthorizeView>
 
 @code{

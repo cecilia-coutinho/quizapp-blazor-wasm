@@ -6,11 +6,11 @@
 
 <MudLayout>
 
-    <MudAppBar>
+    <MudAppBar Style="height: 85px; padding-top: 10px;">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         Quiz Demo
         <MudSpacer />
-        <MudLink Style="color: white !important; width: 200px; height: 60px;" Underline="Underline.None"><LoginDisplay /></MudLink>
+        <LoginDisplay />
     </MudAppBar>
 
     <MudDrawer @bind-Open="@_drawerOpen">

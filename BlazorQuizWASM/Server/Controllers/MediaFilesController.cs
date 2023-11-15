@@ -3,6 +3,8 @@ using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Net;
 
 namespace BlazorQuizWASM.Server.Controllers
 {
@@ -22,46 +24,57 @@ namespace BlazorQuizWASM.Server.Controllers
         // POST: api/MediaFiles/Upload
         [HttpPost]
         [Route("Upload")]
-        public async Task<ActionResult> Upload([FromForm] MediaUploadRequestDto request)
+        public async Task<ActionResult<List<MediaFileResponseDto>>> Upload([FromForm] IEnumerable<IFormFile> request)
         {
-            ValidateFileUpload(request);
+            List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
 
-            if (ModelState.IsValid)
+            foreach (var file in request)
             {
-                var mediaTypeId = await GetMediaTypeIdFromRequest(request);
+                ValidateFileUpload(file);
 
-                if (mediaTypeId != Guid.Empty && request.File != null)
+                if (ModelState.IsValid)
                 {
-                    //convert DTO to Domain Model
-                    var mediaDomainModel = new MediaFile
-                    {
-                        FkMediaTypeId = mediaTypeId,
-                        File = request.File,
-                        FileExtension = Path.GetExtension(request.File.FileName).ToLower(),
-                        FileSizeInBytes = request.File.Length,
-                        MediaFileName = request.MediaFileName.ToLower(),
-                    };
-                    // User repository to uplaod files
-                    await _mediaFileRepository.Upload(mediaDomainModel);
+                    var uploadResult = new MediaFileResponseDto();
+                    string trustedFileNameForFileStorage;
+                    var untrustedFileName = file.FileName;
+                    uploadResult.MediaFileName = untrustedFileName;
+                    var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
 
-                    var customResponse = new MediaFileResponseDto
-                    {
-                        MediaFileName = mediaDomainModel.MediaFileName,
-                        FileExtension = mediaDomainModel.FileExtension,
-                        FileSizeInBytes = mediaDomainModel.FileSizeInBytes,
-                        FilePath = mediaDomainModel.FilePath
-                    };
+                    trustedFileNameForFileStorage = Path.GetRandomFileName();
+                    var fileExtension = Path.GetExtension(uploadResult.MediaFileName).ToLowerInvariant();
 
-                    return Ok(customResponse);
+                    var mediaTypeId = await GetMediaTypeIdFromRequest(file);
+
+                    if (mediaTypeId != Guid.Empty && request?.FirstOrDefault() != null)
+                    {
+                        //convert DTO to Domain Model
+                        var mediaDomainModel = new MediaFile
+                        {
+                            FkMediaTypeId = mediaTypeId,
+                            File = file,
+                            FileExtension = fileExtension,
+                            FileSizeInBytes = file.Length,
+                            MediaFileName = trustedFileNameForFileStorage,
+                        };
+                        // User repository to uplaod files
+                        await _mediaFileRepository.Upload(mediaDomainModel);
+
+                        uploadResult.MediaFileName = trustedFileNameForFileStorage;
+                        uploadResult.FileExtension = fileExtension;
+                        uploadResult.FileSizeInBytes = mediaDomainModel.FileSizeInBytes;
+                        uploadResults.Add(uploadResult);
+
+                        return Ok(uploadResults);
+                    }
                 }
             }
 
             return BadRequest(ModelState);
         }
 
-        private void ValidateFileUpload(MediaUploadRequestDto request)
+        private void ValidateFileUpload(IFormFile request)
         {
-            var contentType = request?.File?.ContentType;
+            var contentType = request?.ContentType;
             var allowedExtensions = new string[] { "image/jpeg", "image/png", "video/mp4", "video/webm", "video/x-m4v" };
 
             if (!allowedExtensions.Contains(contentType))
@@ -69,20 +82,38 @@ namespace BlazorQuizWASM.Server.Controllers
                 ModelState.AddModelError("file", "Unsupported file extension");
             }
 
-            if (request?.File?.Length > 10485760)
+            if (request?.Length > 10485760)
             {
                 ModelState.AddModelError("file", "File size more than 10MB, please upload a smaller size file.");
             }
         }
 
-        private async Task<Guid> GetMediaTypeIdFromRequest(MediaUploadRequestDto request)
+        private async Task<Guid> GetMediaTypeIdFromRequest(IFormFile request)
         {
-            if (request.MediaType == null)
+            if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var mediaType = await _mediaTypeRepository.GetMediaType(request.MediaType);
+            var allowedImageTypes = new string[] { "image/jpeg", "image/png" };
+            var allowedVideoTypes = new string[] { "video/mp4", "video/webm", "video/x-m4v" };
+            var contentType = request.ContentType;
+            string? media = null;
+
+            if (contentType != null && allowedImageTypes.Contains(contentType))
+            {
+                media = "image";
+            }
+            if (contentType != null && allowedVideoTypes.Contains(contentType))
+            {
+                media = "video";
+            }
+
+            if (media == null)
+            {
+                throw new Exception("Unsupported media type");
+            }
+            var mediaType = await _mediaTypeRepository.GetMediaType(media);
             return mediaType?.MediaId ?? Guid.Empty;
         }
     }

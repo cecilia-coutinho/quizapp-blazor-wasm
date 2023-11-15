@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace BlazorQuizWASM.Shared.DTO
 {
@@ -12,8 +7,11 @@ namespace BlazorQuizWASM.Shared.DTO
         [NotNull]
         public string? MediaFileName { get; set; }
 
+        public string? StoredFileName { get; set; }
         public string? FileExtension { get; set; }
         public long FileSizeInBytes { get; set; }
         public string? FilePath { get; set; }
+        public bool Uploaded { get; set; }
+        public int ErrorCode { get; set; }
     }
 }

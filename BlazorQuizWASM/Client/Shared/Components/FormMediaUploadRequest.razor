@@ -1,165 +1,188 @@
-﻿@using BlazorQuizWASM.Shared.DTO
-@using System.Text.RegularExpressions
-@using System.ComponentModel.DataAnnotations
+﻿@using System.Net.Http.Headers
+@using BlazorQuizWASM.Shared.DTO;
 @using System.Text.Json;
 @using System.Text;
-@using System.Net;
-@using Microsoft.AspNetCore.Http;
-@using System.IO;
-@using System.Collections.Generic;
-@using System.Net.Http.Headers;
+@using Microsoft.Extensions.Logging
 @inject HttpClient _http;
-@inject NavigationManager _navigationManager;
+@inject ILogger<FormMediaUploadRequest> _logger
 
-<MudGrid>
-    <MudItem xs="12" sm="7">
-        <MudPaper Class="pa-4">
-            <MudForm
-                Model="mediaModel"
-                @ref="form" 
-                @bind-IsValid="@success" 
-                @bind-Errors="@errors" >
+<p>
+    <label>
+        Max file size:
+        <input type="number" @bind="maxFileSize" />
+    </label>
+</p>
 
-                <MudTextField 
-                    @bind-Value="@mediaModel.MediaFileName"
-                    For="@(() => mediaModel.MediaFileName)"
-                    T="string" 
-                    Label="File Name"
-                    Required="true" 
-                    RequiredError="Media File Name Required!" />
+<p>
+    <label>
+        Max allowed files:
+        <input type="number" @bind="maxAllowedFiles" />
+    </label>
+</p>
 
-                <MudFileUpload 
-                    @bind-Value="@mediaModel.File"
-                    T="IBrowserFile" 
-                    FilesChanged="UploadFiles"
-                    OnChanged="SaveFile">
-                    <ButtonTemplate>
-                        <MudButton HtmlTag="label"
-                                   Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.CloudUpload"
-                                   for="@context">
-                            Upload Files
-                        </MudButton>
-                    </ButtonTemplate>
-                </MudFileUpload>
+<p>
+    <label>
+        <InputFile OnChange="@LoadFiles" multiple />
+    </label>
+</p>
 
-                <div class="d-flex">
-                    <MudRadioGroup 
-                        @bind-Value="@mediaModel.MediaType"
-                        For="@(() => mediaModel.MediaType)"
-                        T="string" 
-                        Required="true" 
-                        RequiredError="Media type is required!">
-                        <MudRadio Option="@("image")">Image</MudRadio>
-                        <MudRadio Option="@("video")">Video</MudRadio>
-                    </MudRadioGroup>
-                </div>
-
-                <div class="d-flex align-center justify-space-between">
-                    <MudButton 
-                        Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!success)" Class="ml-auto" OnClick="UploadFileAsync">Send</MudButton>
-
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" DisableElevation="true" OnClick="@(()=>form.ResetAsync())" Class="mx-2">Reset</MudButton>
-                </div>
-            </MudForm>
-        </MudPaper>
-
-    </MudItem>
-    <MudItem xs="12" sm="5">
-        <MudPaper Class="pa-4 mud-height-full">
-            <MudText Typo="Typo.subtitle2">@($"Errors ({errors.Length})")</MudText>
-                @foreach (var error in errors)
-            {
-                <MudText Color="@Color.Error">@error</MudText>
-            }
-        </MudPaper>
-    </MudItem>
-</MudGrid>
-
-
-@if (files != null)
+@if (files.Count > 0)
 {
-    <MudText Typo="@Typo.h6">@files.Count() File@(files.Count() == 1 ? "" : "s"):</MudText>
-    <MudList>
-        @foreach (var file in files)
-        {
-            <MudListItem Icon="@Icons.Material.Filled.AttachFile" @key="@file">
-                @file.Name <code>@file.Size bytes</code>
-            </MudListItem>
-        }
-    </MudList>
+    <div class="card">
+        <div class="card-body">
+            <ul>
+                @foreach (var file in files)
+                {
+                    <li>
+                        File: @file.Name
+                        <br>
+                        @if (FileUpload(loadedFiles, file.Name, _logger,
+                       out var result))
+                        {
+                            <span>
+                                Stored File Name: @result.StoredFileName
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                There was an error uploading the file
+                                (Error: @result.ErrorCode).
+                            </span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
 }
 
 @code {
-    bool success;
-    string[] errors = { };
-    MudTextField<string>? pwField1;
-    MudForm form;
-    string? APIErrorMessage;
-    private bool isLoading;
+    private List<File> files = new();
+    private long maxFileSize = 1024 * 1024;
+    private int maxAllowedFiles = 1;
+    private List<MediaFileResponseDto> loadedFiles = new();
+    private bool shouldRender;
 
-    IList<IBrowserFile> files = new List<IBrowserFile>();
-
-    private void UploadFiles(IBrowserFile file)
+    private async Task LoadFiles(InputFileChangeEventArgs e)
     {
-        files.Add(file);
-    }
+        shouldRender = false;
+        bool upload = false;
+        using var content = new MultipartFormDataContent();
 
-    // private async Task SaveFile(InputFileChangeEventArgs e)
-    // {
-
-    //     using var content = new MultipartFormDataContent();
-    //     foreach (var file in e.GetMultipleFiles(1))
-    //     {
-    //         var fileContent = new StreamContent(file.OpenReadStream());
-    //         fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
-
-    //         files.Add(file);
-    //         content.Add(
-    //             content: fileContent,
-    //             name: "\"files\"",
-    //             fileName: file.Name
-    //         );
-    //     }
-
-    // }
-
-
-    MediaUploadRequestDto mediaModel = new MediaUploadRequestDto();
-
-    private async Task UploadFileAsync()
-    {
-        if (files.Count > 0)
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
         {
-            isLoading = true;
-            //files.Clear();
-            await form.Validate();
-
-            if (form.IsValid)
+            if (loadedFiles.SingleOrDefault(
+                f => f.MediaFileName == file.Name) is null)
             {
-                var formFile = (IFormFile?)Convert.ChangeType(files.FirstOrDefault(), typeof(IFormFile));
-                mediaModel.File = formFile;
-
-                var jsonPayload = JsonSerializer.Serialize(mediaModel);
-                var requestContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-                var response = await _http.PostAsync("api/mediafiles/upload", requestContent);
-
-                if (response.StatusCode == HttpStatusCode.BadRequest)
+                try
                 {
-                    isLoading = false;
-                    success = false;
-                    APIErrorMessage = "Error to fetch";
-                    throw new Exception(APIErrorMessage);
+                    files.Add(new() { Name = file.Name });
+
+                    var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
+
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+                    //files.Add(file.Name);
+
+                    content.Add(
+                        content: fileContent,
+                        name: "\"files\"",
+                        fileName: file.Name);
+
+                    upload = true;
+
+
                 }
-                if (response.StatusCode == HttpStatusCode.OK)
+                catch (Exception ex)
                 {
-                    isLoading = false;
-                    success = true;
+                    _logger.LogInformation("{FileName} not uploaded (Err: 6): {Message}",file.Name, ex.Message);
+
+                    loadedFiles.Add(
+                        new()
+                            {
+                                MediaFileName = file.Name,
+                                ErrorCode = 6,
+                                Uploaded = false
+                            });
                 }
+
+                if (upload)
+                {
+                    var response = await _http.PostAsync("/api/MediaFiles/Upload", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        try
+                        {
+
+                            // Deserialize the response content
+                            var jsonResponse = await response.Content.ReadAsStringAsync();
+                            var newUploadResults = JsonSerializer.Deserialize<List<MediaFileResponseDto>>(jsonResponse, new JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+
+                            if (newUploadResults != null)
+                            {
+                                loadedFiles.AddRange(newUploadResults);
+                            }
+                            else
+                            {
+                                // Handle null response
+                                _logger.LogError("Received null response when deserializing MediaFileResponseDto list.");
+                            }
+                            // var newUploadResults = await response.Content.ReadFromJsonAsync<IList<MediaFileResponseDto>>();
+
+                            // if (newUploadResults != null)
+                            // {
+                            //     loadedFiles.AddRange(newUploadResults);
+                            //     //loadedFiles = loadedFiles.Concat(newUploadResults).ToList();
+                            // }
+                            // string responseContent = await response.Content.ReadAsStringAsync();
+
+                        }
+                        catch (JsonException ex)
+                        {
+                            _logger.LogError("Error deserializing JSON: {Message}", ex.Message);
+                        }
+                    }
+                }
+                shouldRender = true;
             }
+
         }
     }
+
+
+    private string? GetStoredFileName(string fileName)
+    {
+        var uploadResult = loadedFiles.SingleOrDefault(f => f.MediaFileName == fileName);
+
+        if (uploadResult != null)
+        {
+            return uploadResult.StoredFileName;
+        }
+        return "File not found";
+    }
+
+    private static bool FileUpload(IList<MediaFileResponseDto> uploadResults,
+    string? fileName, ILogger<FormMediaUploadRequest> logger, out MediaFileResponseDto result)
+    {
+        result = uploadResults.SingleOrDefault(f => f.MediaFileName == fileName) ?? new();
+
+        if (!result.Uploaded)
+        {
+            logger.LogInformation("{FileName} not uploaded (Err: 5)", fileName);
+            result.ErrorCode = 5;
+        }
+
+        return result.Uploaded;
+    }
+
+    private class File
+    {
+        public string? Name { get; set; }
+    }
+
 }
-
-

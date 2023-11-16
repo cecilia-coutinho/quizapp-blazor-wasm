@@ -24,7 +24,7 @@ namespace BlazorQuizWASM.Server.Controllers
         // POST: api/MediaFiles/Upload
         [HttpPost]
         [Route("Upload")]
-        public async Task<ActionResult<List<MediaFileResponseDto>>> Upload([FromForm] IEnumerable<IFormFile> request)
+        public async Task<ActionResult<IList<MediaFileResponseDto>>> Upload([FromForm] IEnumerable<IFormFile> request)
         {
             List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
 
@@ -47,7 +47,6 @@ namespace BlazorQuizWASM.Server.Controllers
 
                     if (mediaTypeId != Guid.Empty && request?.FirstOrDefault() != null)
                     {
-                        //convert DTO to Domain Model
                         var mediaDomainModel = new MediaFile
                         {
                             FkMediaTypeId = mediaTypeId,
@@ -56,10 +55,10 @@ namespace BlazorQuizWASM.Server.Controllers
                             FileSizeInBytes = file.Length,
                             MediaFileName = trustedFileNameForFileStorage,
                         };
-                        // User repository to uplaod files
+
                         await _mediaFileRepository.Upload(mediaDomainModel);
 
-                        uploadResult.MediaFileName = trustedFileNameForFileStorage;
+                        uploadResult.MediaFileName = trustedFileNameForDisplay;
                         uploadResults.Add(uploadResult);
 
                         return Ok(uploadResults);

@@ -30,7 +30,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Medias\" />
+    <Folder Include="wwwroot\Medias\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\Medias\ktuuqdqy.2jl.png" />
   </ItemGroup>
 
 </Project>

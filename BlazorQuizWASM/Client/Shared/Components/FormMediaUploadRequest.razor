@@ -1,189 +1,93 @@
-﻿@using System.Net.Http.Headers
+﻿@* @using System.Net.Http.Headers
 @using BlazorQuizWASM.Shared.DTO;
 @using System.Text.Json;
 @using System.Text;
 @using Microsoft.Extensions.Logging
 @inject HttpClient _http;
-@inject ILogger<FormMediaUploadRequest> _logger
+@inject ILogger<FormMediaUploadRequest> _logger *@
 
-<p>
-    <label>
-        Max file size:
-        <input type="number" @bind="maxFileSize" />
-    </label>
-</p>
+@using System.IO;
+@using Blazor.FileReader;
 
-<p>
-    <label>
-        Max allowed files:
-        <input type="number" @bind="maxAllowedFiles" />
-    </label>
-</p>
+@inject IFileReaderService fileReader
+@inject HttpClient _http
 
-<p>
-    <label>
-        <InputFile OnChange="@LoadFiles" multiple />
-    </label>
-</p>
-
-@if (files.Count > 0)
-{
-    <div class="card">
-        <div class="card-body">
+<div class="row">
+    <div class="col-4">
+        <div class="form-group">
+            <input type="file" @ref="inputReference" @onchange="async () => await OpenFileAsync()" />
             <ul>
-                @foreach (var file in files)
-                {
-                    <li>
-                        File: @file.Name
-                        <br>
-                        @if (FileUpload(loadedFiles, file.Name, _logger,
-                       out var result))
-                        {
-                            <span>
-                                Stored File Name: @result.StoredFileName
-                            </span>
-                        }
-                        else
-                        {
-                            <span>
-                                There was an error uploading the file
-                                (Error: @result.ErrorCode).
-                            </span>
-                        }
-                    </li>
-                }
+                <li>File Name: @fileName</li>
+                <li>Size: @size</li>
+                <li>Type: @type</li>
             </ul>
         </div>
+        <button class="btn btn-block btn-success" @onclick="async () => await UploadFileAsync()">Upload File</button>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="alert alert-success">
+                File has been uploaded
+            </div>
+        }
     </div>
-}
-
-@code {
-    private List<File> files = new();
-    private long maxFileSize = 1024 * 1024;
-    private int maxAllowedFiles = 1;
-    private List<MediaFileResponseDto> loadedFiles = new();
-    private bool shouldRender;
-
-    private async Task LoadFiles(InputFileChangeEventArgs e)
-    {
-        shouldRender = false;
-        bool upload = false;
-        using var content = new MultipartFormDataContent();
-
-        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+    <div class="col-4">
+        @if (imagePath != null)
         {
-            if (loadedFiles.SingleOrDefault(
-                f => f.MediaFileName == file.Name) is null)
-            {
-                try
-                {
-                    files.Add(new() { Name = file.Name });
+            <img style="width:150px" src="@imagePath" />
+        }
+    </div>
+</div>
 
-                    var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
+@functions
+{
+    ElementReference inputReference;
+    string message = string.Empty;
+    string imagePath = null;
 
-                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+    string fileName = string.Empty;
+    string type = string.Empty;
+    string size = string.Empty;
 
-                    //files.Add(file.Name);
+    Stream fileStream = null;
 
-                    content.Add(
-                        content: fileContent,
-                        name: "\"files\"",
-                        fileName: file.Name);
+    async Task OpenFileAsync()
+    {
+        // Read the files
+        var file = (await fileReader.CreateReference(inputReference).EnumerateFilesAsync()).FirstOrDefault();
 
-                    upload = true;
+        if (file == null)
+            return;
 
+        // Get the info of that files
+        var fileInfo = await file.ReadFileInfoAsync();
+        fileName = fileInfo.Name;
+        size = $"{fileInfo.Size}b";
+        type = fileInfo.Type;
 
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogInformation("{FileName} not uploaded (Err: 6): {Message}",file.Name, ex.Message);
-
-                    loadedFiles.Add(
-                        new()
-                            {
-                                MediaFileName = file.Name,
-                                ErrorCode = 6,
-                                Uploaded = false
-                            });
-                }
-
-                if (upload)
-                {
-                    var response = await _http.PostAsync("api/mediafiles/upload", content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        try
-                        {
-                            var jsonResponse = await response.Content.ReadAsStringAsync();
-                            var newUploadResults = JsonSerializer.Deserialize<List<MediaFileResponseDto>>(jsonResponse, new JsonSerializerOptions
-                            {
-                                PropertyNameCaseInsensitive = true
-                            });
-
-                            if (newUploadResults != null)
-                            {
-                                loadedFiles.AddRange(newUploadResults);
-                            }
-                            else
-                            {
-                                var errorResponse = await response.Content.ReadAsStringAsync();
-                                _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}, Response: {Response}",
-                                    file.Name, response.StatusCode, errorResponse);
-                            }
-
-
-                            // var newUploadResults = await response.Content.ReadFromJsonAsync<IList<MediaFileResponseDto>>();
-
-                            // if (newUploadResults != null)
-                            // {
-                            //     loadedFiles.AddRange(newUploadResults);
-                            //     //loadedFiles = loadedFiles.Concat(newUploadResults).ToList();
-                            // }
-                            // string responseContent = await response.Content.ReadAsStringAsync();
-
-                        }
-                        catch (JsonException ex)
-                        {
-                            _logger.LogError("Error deserializing JSON: {Message}", ex.Message);
-                        }
-                    }
-                }
-                shouldRender = true;
-            }
-
+        using (var ms = await file.CreateMemoryStreamAsync((int)fileInfo.Size))
+        {
+            fileStream = new MemoryStream(ms.ToArray());
         }
     }
 
-
-    private string? GetStoredFileName(string fileName)
+    async Task UploadFileAsync()
     {
-        var uploadResult = loadedFiles.SingleOrDefault(f => f.MediaFileName == fileName);
 
-        if (uploadResult != null)
+        // Create the content
+        var content = new MultipartFormDataContent();
+        content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("form-data");
+
+        content.Add(new StreamContent(fileStream, (int)fileStream.Length), "image", fileName);
+
+
+        var response = await _http.PostAsync($"api/mediafiles", content);
+
+        if (response.IsSuccessStatusCode)
         {
-            return uploadResult.StoredFileName;
+            var uploadedFileName = await response.Content.ReadAsStringAsync();
+            imagePath = $"{uploadedFileName}";
+            message = "File has been uploaded successfully!";
         }
-        return "File not found";
     }
-
-    private static bool FileUpload(IList<MediaFileResponseDto> uploadResults,
-    string? fileName, ILogger<FormMediaUploadRequest> logger, out MediaFileResponseDto result)
-    {
-        result = uploadResults.SingleOrDefault(f => f.MediaFileName == fileName) ?? new();
-
-        if (!result.Uploaded)
-        {
-            logger.LogInformation("{FileName} not uploaded (Err: 5)", fileName);
-            result.ErrorCode = 5;
-        }
-
-        return result.Uploaded;
-    }
-
-    private class File
-    {
-        public string? Name { get; set; }
-    }
-
 }

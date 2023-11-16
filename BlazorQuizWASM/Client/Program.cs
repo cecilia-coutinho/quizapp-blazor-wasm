@@ -1,4 +1,4 @@
-using BlazorQuizWASM.Client;
+using Blazor.FileReader;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -19,6 +19,8 @@ namespace BlazorQuizWASM.Client
 
             // Supply HttpClient instances that include access tokens when making requests to the server project
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("BlazorQuizWASM.ServerAPI"));
+
+            builder.Services.AddFileReaderService(options => options.UseWasmSharedBuffer = false);
 
             builder.Services.AddMudServices();
 

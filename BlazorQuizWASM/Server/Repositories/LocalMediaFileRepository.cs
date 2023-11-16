@@ -21,7 +21,7 @@ namespace BlazorQuizWASM.Server.Repositories
 
         public async Task<MediaFile> Upload(MediaFile media)
         {
-            var localFilePath = Path.Combine(_environment.ContentRootPath, "wwwroot/Medias", $"{media.MediaFileName}{media.FileExtension}");
+            var localFilePath = Path.Combine(_environment.ContentRootPath, "wwwroot", "Medias", $"{media.MediaFileName}{media.FileExtension}");
 
             if (media.MediaFileName.Length > 0 && media.File != null)
             {

@@ -2,6 +2,7 @@
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Net;
@@ -23,47 +24,52 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // POST: api/MediaFiles/Upload
         [HttpPost]
-        [Route("Upload")]
-        public async Task<ActionResult<IList<MediaFileResponseDto>>> Upload([FromForm] IEnumerable<IFormFile> request)
+        public async Task<ActionResult> Upload([FromForm] MediaUploadRequestDto request)
         {
+
+            if (request?.File != null || request?.File?.Length > 0)
+            {
+                ModelState.AddModelError("file", "No file uploaded.");
+                return BadRequest("No file uploaded.");
+            }
+
+            ValidateFileUpload(request.File);
             List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
 
-            foreach (var file in request)
+            if (ModelState.IsValid)
             {
-                ValidateFileUpload(file);
+                var uploadResult = new MediaFileResponseDto();
 
-                if (ModelState.IsValid)
+                var untrustedFileName = request.File.FileName;
+                uploadResult.MediaFileName = untrustedFileName;
+                var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
+
+                var trustedFileNameForFileStorage = Path.GetRandomFileName();
+                var fileExtension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+
+                var mediaTypeId = await GetMediaTypeIdFromRequest(request.File);
+
+                if (mediaTypeId != Guid.Empty && request != null)
                 {
-                    var uploadResult = new MediaFileResponseDto();
-                    string trustedFileNameForFileStorage;
-                    var untrustedFileName = file.FileName;
-                    uploadResult.MediaFileName = untrustedFileName;
-                    var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
-
-                    trustedFileNameForFileStorage = Path.GetRandomFileName();
-                    var fileExtension = Path.GetExtension(uploadResult.MediaFileName).ToLowerInvariant();
-
-                    var mediaTypeId = await GetMediaTypeIdFromRequest(file);
-
-                    if (mediaTypeId != Guid.Empty && request?.FirstOrDefault() != null)
+                    var mediaDomainModel = new MediaFile
                     {
-                        var mediaDomainModel = new MediaFile
-                        {
-                            FkMediaTypeId = mediaTypeId,
-                            File = file,
-                            FileExtension = fileExtension,
-                            FileSizeInBytes = file.Length,
-                            MediaFileName = trustedFileNameForFileStorage,
-                        };
+                        FkMediaTypeId = mediaTypeId,
+                        File = request.File,
+                        FileExtension = fileExtension,
+                        FileSizeInBytes = request.File.Length,
+                        MediaFileName = trustedFileNameForFileStorage,
+                    };
 
-                        await _mediaFileRepository.Upload(mediaDomainModel);
+                    await _mediaFileRepository.Upload(mediaDomainModel);
 
-                        uploadResult.MediaFileName = trustedFileNameForDisplay;
-                        uploadResults.Add(uploadResult);
+                    uploadResult.MediaFileName = trustedFileNameForDisplay;
+                    uploadResult.StoredFileName = trustedFileNameForFileStorage;
+                    uploadResults.Add(uploadResult);
+                    var response = uploadResults.Select(a => new { a.MediaFileName, a.StoredFileName });
 
-                        return Ok(uploadResults);
-                    }
+                    return Ok(response);
                 }
+                
             }
 
             return BadRequest(ModelState);
@@ -85,7 +91,7 @@ namespace BlazorQuizWASM.Server.Controllers
             }
         }
 
-        private async Task<Guid> GetMediaTypeIdFromRequest(IFormFile request)
+        private async Task<Guid> GetMediaTypeIdFromRequest(IFormFile? request)
         {
             if (request == null)
             {
@@ -108,7 +114,7 @@ namespace BlazorQuizWASM.Server.Controllers
 
             if (media == null)
             {
-                throw new Exception("Unsupported media type");
+                ModelState.AddModelError("file","Unsupported media type");
             }
             var mediaType = await _mediaTypeRepository.GetMediaType(media);
             return mediaType?.MediaId ?? Guid.Empty;

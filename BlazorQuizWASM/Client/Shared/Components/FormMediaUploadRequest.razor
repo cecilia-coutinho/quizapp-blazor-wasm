@@ -109,14 +109,12 @@
 
                 if (upload)
                 {
-                    var response = await _http.PostAsync("/api/MediaFiles/Upload", content);
+                    var response = await _http.PostAsync("api/mediafiles/upload", content);
 
                     if (response.IsSuccessStatusCode)
                     {
                         try
                         {
-
-                            // Deserialize the response content
                             var jsonResponse = await response.Content.ReadAsStringAsync();
                             var newUploadResults = JsonSerializer.Deserialize<List<MediaFileResponseDto>>(jsonResponse, new JsonSerializerOptions
                             {
@@ -129,9 +127,12 @@
                             }
                             else
                             {
-                                // Handle null response
-                                _logger.LogError("Received null response when deserializing MediaFileResponseDto list.");
+                                var errorResponse = await response.Content.ReadAsStringAsync();
+                                _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}, Response: {Response}",
+                                    file.Name, response.StatusCode, errorResponse);
                             }
+
+
                             // var newUploadResults = await response.Content.ReadFromJsonAsync<IList<MediaFileResponseDto>>();
 
                             // if (newUploadResults != null)

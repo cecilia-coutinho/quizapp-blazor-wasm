@@ -60,8 +60,6 @@ namespace BlazorQuizWASM.Server.Controllers
                         await _mediaFileRepository.Upload(mediaDomainModel);
 
                         uploadResult.MediaFileName = trustedFileNameForFileStorage;
-                        uploadResult.FileExtension = fileExtension;
-                        uploadResult.FileSizeInBytes = mediaDomainModel.FileSizeInBytes;
                         uploadResults.Add(uploadResult);
 
                         return Ok(uploadResults);

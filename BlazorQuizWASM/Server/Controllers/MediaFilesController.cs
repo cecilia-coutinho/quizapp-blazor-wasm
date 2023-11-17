@@ -32,7 +32,7 @@ namespace BlazorQuizWASM.Server.Controllers
             if (request.File != null || request?.File?.Length > 0)
             {
                 ValidateFileUpload(request.File);
-                List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
+                List<MediaFileResponseDto> uploadResults = new ();
 
                 if (ModelState.IsValid)
                 {

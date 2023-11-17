@@ -90,14 +90,13 @@ namespace BlazorQuizWASM
 
             builder.Services.AddRazorPages();
 
-            //remove when finishing development
-            builder.Services.AddCors( options =>
+            builder.Services.AddCors(options =>
             {
-                options.AddPolicy("CorsPolicy", builder =>
+                options.AddPolicy("AllowEverything", builder =>
                 {
                     builder.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
                 });
             });
 
@@ -131,9 +130,7 @@ namespace BlazorQuizWASM
             app.UseIdentityServer();
             app.UseAuthorization();
 
-            //remove when finishing development
-            app.UseCors("CorsPolicy");
-
+            app.UseCors("AllowEverything");
 
             app.MapRazorPages();
             app.MapControllers();

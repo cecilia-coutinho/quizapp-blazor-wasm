@@ -1,6 +1,7 @@
 ﻿using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
@@ -24,39 +25,41 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // POST: api/MediaFiles/Upload
         [HttpPost]
-        public async Task<ActionResult> Upload([FromForm] MediaUploadRequestDto request)
+        [Route("Upload")]
+        [Authorize]
+        public async Task<ActionResult> Upload([FromForm] IFormFile request)
         {
 
-            if (request?.File != null || request?.File?.Length > 0)
+            if (request == null || request?.Length == 0)
             {
                 ModelState.AddModelError("file", "No file uploaded.");
                 return BadRequest("No file uploaded.");
             }
 
-            ValidateFileUpload(request.File);
+            ValidateFileUpload(request);
             List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
 
             if (ModelState.IsValid)
             {
                 var uploadResult = new MediaFileResponseDto();
 
-                var untrustedFileName = request.File.FileName;
+                var untrustedFileName = request.FileName;
                 uploadResult.MediaFileName = untrustedFileName;
                 var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
 
                 var trustedFileNameForFileStorage = Path.GetRandomFileName();
-                var fileExtension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+                var fileExtension = Path.GetExtension(request.FileName).ToLowerInvariant();
 
-                var mediaTypeId = await GetMediaTypeIdFromRequest(request.File);
+                var mediaTypeId = await GetMediaTypeIdFromRequest(request);
 
                 if (mediaTypeId != Guid.Empty && request != null)
                 {
                     var mediaDomainModel = new MediaFile
                     {
                         FkMediaTypeId = mediaTypeId,
-                        File = request.File,
+                        File = request,
                         FileExtension = fileExtension,
-                        FileSizeInBytes = request.File.Length,
+                        FileSizeInBytes = request.Length,
                         MediaFileName = trustedFileNameForFileStorage,
                     };
 
@@ -91,7 +94,7 @@ namespace BlazorQuizWASM.Server.Controllers
             }
         }
 
-        private async Task<Guid> GetMediaTypeIdFromRequest(IFormFile? request)
+        private async Task<Guid> GetMediaTypeIdFromRequest(IFormFile request)
         {
             if (request == null)
             {

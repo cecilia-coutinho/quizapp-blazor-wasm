@@ -68,9 +68,8 @@ namespace BlazorQuizWASM.Server.Controllers
                     uploadResult.MediaFileName = trustedFileNameForDisplay;
                     uploadResult.StoredFileName = trustedFileNameForFileStorage;
                     uploadResults.Add(uploadResult);
-                    var response = uploadResults.Select(a => new { a.MediaFileName, a.StoredFileName });
 
-                    return Ok(response);
+                    return Ok(uploadResults);
                 }
                 
             }

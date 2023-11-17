@@ -29,48 +29,44 @@ namespace BlazorQuizWASM.Server.Controllers
         [Authorize]
         public async Task<ActionResult> Upload([FromForm] MediaUploadRequestDto request)
         {
-
-            if (request == null || request?.File?.Length == 0)
+            if (request.File != null || request?.File?.Length > 0)
             {
-                ModelState.AddModelError("file", "No file uploaded.");
-                return BadRequest("No file uploaded.");
-            }
+                ValidateFileUpload(request.File);
+                List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
 
-            ValidateFileUpload(request.File);
-            List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
-
-            if (ModelState.IsValid)
-            {
-                var uploadResult = new MediaFileResponseDto();
-
-                var untrustedFileName = request.File.FileName;
-                uploadResult.MediaFileName = untrustedFileName;
-                var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
-
-                var trustedFileNameForFileStorage = Path.GetRandomFileName();
-                var fileExtension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
-
-                var mediaTypeId = await GetMediaTypeIdFromRequest(request.File);
-
-                if (mediaTypeId != Guid.Empty && request != null)
+                if (ModelState.IsValid)
                 {
-                    var mediaDomainModel = new MediaFile
+                    var uploadResult = new MediaFileResponseDto();
+
+                    var untrustedFileName = request.File.FileName;
+                    uploadResult.MediaFileName = untrustedFileName;
+                    var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
+
+                    var trustedFileNameForFileStorage = Path.GetRandomFileName();
+                    var fileExtension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+
+                    var mediaTypeId = await GetMediaTypeIdFromRequest(request.File);
+
+                    if (mediaTypeId != Guid.Empty && request != null)
                     {
-                        FkMediaTypeId = mediaTypeId,
-                        File = request.File,
-                        FileExtension = fileExtension,
-                        FileSizeInBytes = request.File.Length,
-                        MediaFileName = trustedFileNameForFileStorage,
-                    };
+                        var mediaDomainModel = new MediaFile
+                        {
+                            FkMediaTypeId = mediaTypeId,
+                            File = request.File,
+                            FileExtension = fileExtension,
+                            FileSizeInBytes = request.File.Length,
+                            MediaFileName = trustedFileNameForFileStorage,
+                        };
 
-                    await _mediaFileRepository.Upload(mediaDomainModel);
+                        await _mediaFileRepository.Upload(mediaDomainModel);
 
-                    uploadResult.MediaFileName = trustedFileNameForDisplay;
-                    uploadResult.StoredFileName = trustedFileNameForFileStorage;
-                    uploadResults.Add(uploadResult);
+                        uploadResult.MediaFileName = trustedFileNameForDisplay;
+                        uploadResult.StoredFileName = trustedFileNameForFileStorage;
+                        uploadResults.Add(uploadResult);
 
-                    return Ok(uploadResults);
-                }               
+                        return Ok(uploadResults);
+                    }
+                }
             }
 
             return BadRequest(ModelState);

@@ -1,208 +1,103 @@
 ﻿@using System.Net.Http.Headers
 @using BlazorQuizWASM.Shared.DTO;
-@using BlazorQuizWASM.Client.Services;
-@using System.Text.Json;
-@using System.Text;
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 @using Microsoft.Extensions.Logging
 @inject HttpClient _http;
 @inject ILogger<FormMediaUploadRequest> _logger
-@inject IAccessTokenProvider _tokenProvider
-@inject QuizService _quizService
 
 <p>
     <label>
-        Max file size:
-        <input type="number" @bind="maxFileSize" />
+        <InputFile OnChange="@OpenFile" />
     </label>
+    <div style="margin-top: 15px">
+    <button 
+        class="btn btn-block btn-success" 
+        @onclick="async () => await LoadFiles()">
+        Upload File
+    </button> 
+    </div>
+
 </p>
 
-<p>
-    <label>
-        Max allowed files:
-        <input type="number" @bind="maxAllowedFiles" />
-    </label>
-</p>
-
-<p>
-    <label>
-        <InputFile OnChange="@LoadFiles" multiple />
-    </label>
-</p>
-
-@if (files.Count > 0)
+@if (selectedFile != null)
 {
     <div class="card">
         <div class="card-body">
-            <ul>
-                @foreach (var file in files)
-                {
-                    <li>
-                        File: @file.Name
-                        <br>
-                        @if (FileUpload(loadedFiles, file.Name, _logger,
-                       out var result))
-                        {
-                            <span>
-                                Stored File Name: @result.StoredFileName
-                            </span>
-                        }
-                        else
-                        {
-                            <span>
-                                There was an error uploading the file
-                                (Error: @result.ErrorCode).
-                            </span>
-                        }
-                    </li>
-                }
-            </ul>
+            File: @selectedFile.Name
+            <br />
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div 
+                    class="alert alert-success" 
+                    style="margin-top: 15px"
+                    role="alert">
+                    @successMessage
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(failMessage))
+            {
+                <div 
+                    class="alert alert-warning"
+                    style="margin-top: 15px"
+                    role="alert">
+                    @successMessage
+                </div>
+            }
         </div>
     </div>
 }
 
 @code {
-    private List<File> files = new();
+    private IBrowserFile? selectedFile;
     private long maxFileSize = 1024 * 1024;
-    private int maxAllowedFiles = 1;
-    private List<MediaFileResponseDto> loadedFiles = new();
     private bool shouldRender;
+    private string successMessage = string.Empty;
+    private string failMessage = string.Empty;
 
-    private async Task LoadFiles(InputFileChangeEventArgs e)
+    private async Task OpenFile(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        await Task.CompletedTask;
+    }
+
+    private async Task LoadFiles()
     {
         shouldRender = false;
         bool upload = false;
         using var content = new MultipartFormDataContent();
 
-        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+        if (selectedFile != null)
         {
-            if (loadedFiles.SingleOrDefault(
-                f => f.MediaFileName == file.Name) is null)
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxFileSize));
+
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(selectedFile.ContentType);
+
+            content.Add(
+                content: fileContent,
+                name: "request",
+                fileName: selectedFile.Name);
+
+            upload = true;
+
+            if (upload)
             {
-                try
+                //Token requests occur automatically.
+                //await _quizService.RequestAuthToken();
+                var response = await _http.PostAsync("api/MediaFiles/Upload", content);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    files.Add(new() { Name = file.Name });
-
-                    var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
-
-                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
-
-                    //files.Add(file.Name);
-
-
-                    content.Add(
-                        content: fileContent,
-                        name: "request",
-                        fileName: file.Name);
-
-                    upload = true;
-
+                    successMessage = "File uploaded successfully!";
+                    _logger.LogInformation(successMessage);
+                }
+                else
+                {
+                    failMessage = "Error uploading file";
+                    _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}", selectedFile.Name, response.StatusCode);
 
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogInformation("{FileName} not uploaded (Err: 6): {Message}",file.Name, ex.Message);
-
-                    loadedFiles.Add(
-                        new()
-                            {
-                                MediaFileName = file.Name,
-                                ErrorCode = 6,
-                                Uploaded = false
-                            });
-                }
-
-                if (upload)
-                {
-                    // try
-                    // {
-                    //     var response2 = await _http.PostAsync("api/MediaFiles/Upload", content);
-                    // }
-                    // catch (Exception ex)
-                    // {
-                    //     _logger.LogError("Error uploading file {FileName}: {Message}", file.Name, ex.Message);
-                    // }
-                   //await _quizService.RequestAuthToken();
-                    var response = await _http.PostAsync("api/MediaFiles/Upload", content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        try
-                        {
-                            var jsonResponse = await response.Content.ReadAsStringAsync();
-                            var newUploadResults = JsonSerializer.Deserialize<List<MediaFileResponseDto>>(jsonResponse, new JsonSerializerOptions
-                            {
-                                PropertyNameCaseInsensitive = true
-                            });
-
-                            if (newUploadResults != null)
-                            {
-                                loadedFiles.AddRange(newUploadResults);
-                            }
-                            else
-                            {
-                                var errorResponse = await response.Content.ReadAsStringAsync();
-                                _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}, Response: {Response}",
-                                    file.Name, response.StatusCode, errorResponse);
-                            }
-
-
-                            // var newUploadResults = await response.Content.ReadFromJsonAsync<IList<MediaFileResponseDto>>();
-
-                            // if (newUploadResults != null)
-                            // {
-                            //     loadedFiles.AddRange(newUploadResults);
-                            //     //loadedFiles = loadedFiles.Concat(newUploadResults).ToList();
-                            // }
-                            // string responseContent = await response.Content.ReadAsStringAsync();
-
-                        }
-                        catch (JsonException ex)
-                        {
-                            _logger.LogError("Error deserializing JSON: {Message}", ex.Message);
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}", file.Name, response.StatusCode);
-                        
-                    }
-                }
-                shouldRender = true;
             }
-
-        }
+            shouldRender = true;
+        }       
     }
-
-
-    private string? GetStoredFileName(string fileName)
-    {
-        var uploadResult = loadedFiles.SingleOrDefault(f => f.MediaFileName == fileName);
-
-        if (uploadResult != null)
-        {
-            return uploadResult.StoredFileName;
-        }
-        return "File not found";
-    }
-
-    private static bool FileUpload(IList<MediaFileResponseDto> uploadResults,
-    string? fileName, ILogger<FormMediaUploadRequest> logger, out MediaFileResponseDto result)
-    {
-        result = uploadResults.SingleOrDefault(f => f.MediaFileName == fileName) ?? new();
-
-        if (!result.Uploaded)
-        {
-            logger.LogInformation("{FileName} not uploaded (Err: 5)", fileName);
-            result.ErrorCode = 5;
-        }
-
-        return result.Uploaded;
-    }
-
-    private class File
-    {
-        public string? Name { get; set; }
-    }
-
 }

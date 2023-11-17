@@ -27,39 +27,39 @@ namespace BlazorQuizWASM.Server.Controllers
         [HttpPost]
         [Route("Upload")]
         [Authorize]
-        public async Task<ActionResult> Upload([FromForm] IFormFile request)
+        public async Task<ActionResult> Upload([FromForm] MediaUploadRequestDto request)
         {
 
-            if (request == null || request?.Length == 0)
+            if (request == null || request?.File?.Length == 0)
             {
                 ModelState.AddModelError("file", "No file uploaded.");
                 return BadRequest("No file uploaded.");
             }
 
-            ValidateFileUpload(request);
+            ValidateFileUpload(request.File);
             List<MediaFileResponseDto> uploadResults = new List<MediaFileResponseDto>();
 
             if (ModelState.IsValid)
             {
                 var uploadResult = new MediaFileResponseDto();
 
-                var untrustedFileName = request.FileName;
+                var untrustedFileName = request.File.FileName;
                 uploadResult.MediaFileName = untrustedFileName;
                 var trustedFileNameForDisplay = WebUtility.HtmlEncode(untrustedFileName);
 
                 var trustedFileNameForFileStorage = Path.GetRandomFileName();
-                var fileExtension = Path.GetExtension(request.FileName).ToLowerInvariant();
+                var fileExtension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
 
-                var mediaTypeId = await GetMediaTypeIdFromRequest(request);
+                var mediaTypeId = await GetMediaTypeIdFromRequest(request.File);
 
                 if (mediaTypeId != Guid.Empty && request != null)
                 {
                     var mediaDomainModel = new MediaFile
                     {
                         FkMediaTypeId = mediaTypeId,
-                        File = request,
+                        File = request.File,
                         FileExtension = fileExtension,
-                        FileSizeInBytes = request.Length,
+                        FileSizeInBytes = request.File.Length,
                         MediaFileName = trustedFileNameForFileStorage,
                     };
 

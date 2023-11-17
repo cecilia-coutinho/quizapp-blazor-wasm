@@ -70,8 +70,7 @@ namespace BlazorQuizWASM.Server.Controllers
                     uploadResults.Add(uploadResult);
 
                     return Ok(uploadResults);
-                }
-                
+                }               
             }
 
             return BadRequest(ModelState);

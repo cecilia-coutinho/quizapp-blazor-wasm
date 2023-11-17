@@ -1,27 +1,34 @@
 ﻿<MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All">
-        <MudIcon Icon="@Icons.Material.Filled.Home" /> Home
-    </MudNavLink>
-
-    <MudNavGroup Title="Manage Quizzes" Expanded="true">
-        <MudNavLink Href="/createquiz" Match="NavLinkMatch.Prefix">
-            <MudIcon Icon="@Icons.Material.Filled.Create" /> Create Quiz
+        <MudNavLink Href="/" Match="NavLinkMatch.All">
+            <MudIcon Icon="@Icons.Material.Filled.Home" /> Home
         </MudNavLink>
 
-        <MudNavLink Href="/myquizzes" Match="NavLinkMatch.Prefix">
-            <MudIcon Icon="@Icons.Material.Filled.Quiz" /> My Quizzes
+ <AuthorizeView>
+    <Authorized>
+        <MudNavGroup Title="Manage Quizzes" Expanded="true">
+            <MudNavLink Href="/createquiz" Match="NavLinkMatch.Prefix">
+                <MudIcon Icon="@Icons.Material.Filled.Create" /> Create Quiz
+            </MudNavLink>
+
+            <MudNavLink Href="/myquizzes" Match="NavLinkMatch.Prefix">
+                <MudIcon Icon="@Icons.Material.Filled.Quiz" /> My Quizzes
+            </MudNavLink>
+
+            <MudNavLink Href="/myquizzes" Match="NavLinkMatch.Prefix">
+                <MudIcon Icon="@Icons.Material.Filled.Publish" /> Published Quizzes
+            </MudNavLink>
+        </MudNavGroup>
+    </Authorized>
+
+    <Authorized>
+        <MudNavLink Href="/answeredquizzes" Match="NavLinkMatch.Prefix">
+            <MudIcon Icon="@Icons.Material.Filled.List" /> Answered Quizzes
+        </MudNavLink>
+    </Authorized>
+</AuthorizeView>
+
+        <MudNavLink Href="/test" Match="NavLinkMatch.Prefix">
+            <MudIcon Icon="@Icons.Material.Filled.Code" /> Swagger
         </MudNavLink>
 
-        <MudNavLink Href="/myquizzes" Match="NavLinkMatch.Prefix">
-            <MudIcon Icon="@Icons.Material.Filled.Publish" /> Published Quizzes
-        </MudNavLink>
-    </MudNavGroup>
-
-    <MudNavLink Href="/answeredquizzes" Match="NavLinkMatch.Prefix">
-        <MudIcon Icon="@Icons.Material.Filled.List" /> Answered Quizzes
-    </MudNavLink>
-
-    <MudNavLink Href="/test" Match="NavLinkMatch.Prefix">
-        <MudIcon Icon="@Icons.Material.Filled.Code" /> Swagger
-    </MudNavLink>
 </MudNavMenu>

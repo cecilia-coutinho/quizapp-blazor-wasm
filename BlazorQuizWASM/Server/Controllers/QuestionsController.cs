@@ -27,7 +27,7 @@ namespace BlazorQuizWASM.Server.Controllers
         [Route("upload")]
         [ValidateModel]
         [Authorize]
-        public async Task<ActionResult> CreateQuestion([FromForm] QuestionRequestDto questionRequestDto)
+        public async Task<ActionResult> CreateQuestion([FromBody] QuestionRequestDto questionRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -38,13 +38,15 @@ namespace BlazorQuizWASM.Server.Controllers
               return Problem( "Media Entity not found", statusCode: 500);
             }
 
+            var questionpath = questionRequestDto.QuestionPath.ToLower().Replace(" ", "-");
+
             // Create the question
             Question question = new()
             {
                 FkUserId = userId,
                 FkFileId = mediaEntity.MediaFileId,
                 Title = questionRequestDto.Title,
-                QuestionPath = questionRequestDto.QuestionPath,
+                QuestionPath = questionpath,
                 TimeLimit = questionRequestDto.TimeLimit,
                 IsPublished = questionRequestDto.IsPublished
             };

@@ -15,11 +15,12 @@ namespace BlazorQuizWASM.Shared.DTO
 
         [NotNull]
         [Column(TypeName = "varchar(25)")]
+        [StringLength(25, ErrorMessage = "Path length can't be more than 25.")]
         public string? QuestionPath { get; set; }
 
         [NotNull]
         [Range(1, 45, ErrorMessage = "The time limit must be between 1 and 45min.")]
-        public int TimeLimit { get; set; }
+        public int TimeLimit { get; set; } = 5;
 
         [NotNull]
         public bool IsPublished { get; set; } = false;

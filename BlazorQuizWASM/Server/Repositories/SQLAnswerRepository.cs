@@ -13,16 +13,18 @@ namespace BlazorQuizWASM.Server.Repositories
             _context = context;
         }
 
-        public async Task<Answer> CreateAsync(Answer answer)
+        public async Task<List<Answer>> CreateAsync(List<Answer> answers)
         {
             if (_context.Answers == null)
             {
                 throw new Exception("Entity 'Answers' not found.");
             }
-
-            await _context.Answers.AddAsync(answer);
+            foreach (var answer in answers)
+            {
+                await _context.Answers.AddAsync(answer);
+            }
             await _context.SaveChangesAsync();
-            return answer;
+            return answers;
         }
 
         public async Task<Answer?> DeleteAsync(string answer, Guid questionId)

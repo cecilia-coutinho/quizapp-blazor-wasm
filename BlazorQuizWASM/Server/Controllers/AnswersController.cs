@@ -29,7 +29,7 @@ namespace BlazorQuizWASM.Server.Controllers
         [ValidateModel]
         [Route("answer-by-question")]
         [Authorize]
-        public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] UpdateQuestionRequestDto questionRequestDto)
+        public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] AnswersQuestionRequestDto questionRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -43,34 +43,42 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(response);
         }
 
-        // CREATE Answer
+        // CREATE Answers
         // POST: api/Answers/upload
         [HttpPost]
         [Route("upload")]
         [ValidateModel]
         [Authorize]
-        public async Task<ActionResult> PostAnswer([FromForm] UpdateQuestionRequestDto questionRequestDto, [FromForm] AnswerRequestDto answerRequestDto)
+        public async Task<ActionResult<IEnumerable<AnswerRequestDto>>> PostAnswer([FromBody] AnswersQuestionRequestDto answerRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get question id
-            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionRequestDto.Title, userId);
+            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(answerRequestDto.Title, userId);
             var questionId = question.QuestionId;
 
-            var answer = new Answer
+            var answers = new List<Answer>();
             {
-                Content = answerRequestDto.Content,
-                IsCorrect = answerRequestDto.IsCorrect,
-                FkQuestionId = questionId
+                foreach (var answer in answerRequestDto.Answers)
+                {
+                    answers.Add(new Answer
+                    {
+                        Content = answer.Content,
+                        IsCorrect = answer.IsCorrect,
+                        FkQuestionId = questionId
+                    });
+                }
             };
 
-            await _answerRepository.CreateAsync(answer);
+            await _answerRepository.CreateAsync(answers);
 
-            return Ok(new AnswerRequestDto
+            answerRequestDto.Answers.Select(a => new AnswerRequestDto
             {
-                Content = answer.Content,
-                IsCorrect = answer.IsCorrect
+                Content = a.Content,
+                IsCorrect = a.IsCorrect
             });
+
+            return Ok(answerRequestDto);
         }
 
         // DELETE Answer By Question and User (only a user can delete his own answers)

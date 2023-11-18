@@ -32,7 +32,6 @@ namespace BlazorQuizWASM.Server.Controllers
             if (request.File != null || request?.File?.Length > 0)
             {
                 ValidateFileUpload(request.File);
-                List<MediaFileResponseDto> uploadResults = new ();
 
                 if (ModelState.IsValid)
                 {
@@ -62,9 +61,8 @@ namespace BlazorQuizWASM.Server.Controllers
 
                         uploadResult.MediaFileName = trustedFileNameForDisplay;
                         uploadResult.StoredFileName = trustedFileNameForFileStorage;
-                        uploadResults.Add(uploadResult);
 
-                        return Ok(uploadResults);
+                        return Ok(uploadResult);
                     }
                 }
             }

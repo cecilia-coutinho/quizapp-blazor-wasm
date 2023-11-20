@@ -5,7 +5,7 @@ namespace BlazorQuizWASM.Shared.Services
     public class MediaStateContainer
     {
         public MediaFileResponseDto? Value { get; set; }
-        public event Action OnStateChange;
+        public event Action? OnStateChange;
         public void SetValue(MediaFileResponseDto? value)
         {
             this.Value = value;

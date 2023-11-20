@@ -10,7 +10,7 @@ namespace BlazorQuizWASM.Shared.Services
     public class QuestionStateContainer
     {
         public QuestionRequestDto? Value { get; set; }
-        public event Action OnStateChange;
+        public event Action? OnStateChange;
         public void SetValue(QuestionRequestDto? value)
         {
             this.Value = value;

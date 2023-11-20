@@ -107,15 +107,16 @@ namespace BlazorQuizWASM.Server.Repositories
             return question ?? throw new Exception("Question not found.");
         }
 
-        public async Task<Question> GetQuestionByTitleAndUserAsync(string? title, string? fkUserId)
+        public async Task<Question> GetQuestionByPathAndUserAsync(string? path, string? fkUserId)
         {
             if (_context.Questions == null)
             {
                 throw new Exception("Entity 'Questions' not found.");
             }
 
+            path = path?.ToLower().Replace(" ", "-");
             var question = await _context.Questions
-                .Where(q => q.Title == title && q.FkUserId == fkUserId)
+                .Where(q => q.QuestionPath == path && q.FkUserId == fkUserId)
                 .FirstOrDefaultAsync();
 
             return question ?? throw new Exception("Question not found.");

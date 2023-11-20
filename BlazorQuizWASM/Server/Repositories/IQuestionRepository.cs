@@ -9,7 +9,7 @@ namespace BlazorQuizWASM.Server.Repositories
         Task<Question?> GetByIdAsync(Guid id);
         Task<Question> GetQuestionByPath(string questionPath);
 
-        Task<Question> GetQuestionByTitleAndUserAsync(string? title, string? fkUserId);
+        Task<Question> GetQuestionByPathAndUserAsync(string? title, string? fkUserId);
         Task<Question?> UpdateAsync(Guid id, Question question);
         Task<Question?> DeleteAsync(Guid id);
     }

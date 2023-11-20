@@ -34,7 +34,7 @@ namespace BlazorQuizWASM.Server.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // Get question id
-            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionRequestDto.Title, userId);
+            var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionRequestDto.Path, userId);
             var questionId = question.QuestionId;
 
             var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
@@ -54,11 +54,16 @@ namespace BlazorQuizWASM.Server.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get question id
-            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(answerRequestDto.Title, userId);
+            var question = await _questionRepository.GetQuestionByPathAndUserAsync(answerRequestDto.Path, userId);
             var questionId = question.QuestionId;
 
             var answers = new List<Answer>();
             {
+                if (answerRequestDto.Answers == null)
+                {
+                    return Problem("No answers found", statusCode: 500);
+                }
+
                 foreach (var answer in answerRequestDto.Answers)
                 {
                     answers.Add(new Answer
@@ -91,7 +96,7 @@ namespace BlazorQuizWASM.Server.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // get question id
-            var question = await _questionRepository.GetQuestionByTitleAndUserAsync(questionTitle, userId);
+            var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionTitle, userId);
             var questionId = question.QuestionId;
 
             var deleteAnswerDomainModel = await _answerRepository.DeleteAsync(answer, questionId);

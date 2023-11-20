@@ -2,29 +2,87 @@
 @using BlazorQuizWASM.Shared.DTO;
 @using BlazorQuizWASM.Shared.Services;
 @inject QuestionStateContainer _questionStateContainer;
+@inject HttpClient _http;
+@inject NavigationManager _navigationManager;
 
-<MudCard>
-    <MudForm>
-        <MudCardContent>
-            <MudTextField For="@(() => model.Content)" Label="Parameter Label" />
-            <MudSwitch For="@(() => model.IsCorrect)" Label="Parameter Label" />
-        </MudCardContent>
-        <MudButtonGroup>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Submit</MudButton>
-            <MudButton ButtonType="ButtonType.Reset" Variant="Variant.Filled" Color="Color.Secondary">Reset</MudButton>
-        </MudButtonGroup>
-    </MudForm>
-</MudCard>
+<MudPaper>
+    <MudGrid>
+        @if (answersQuestion?.Answers?.Count > 0)
+        {
+            @foreach (var answer in answersQuestion.Answers)
+            {
+                <MudItem xs="12" Style="padding:30px;">
+                    <MudTextField Label="Content" @bind-Value="@answer.Content" />
+                    <MudSwitch Label="Is Correct" @bind-Checked="@answer.IsCorrect" />
+
+                    <MudButton OnClick="@(() => DeleteAnswer(answer))"
+                               Variant="Variant.Filled">
+                        Delete
+                    </MudButton>
+                </MudItem>
+            }
+        }
+
+        <div class="custom-button-group">
+            <MudButton OnClick="@AddAnswer"
+                       Variant="Variant.Filled"
+                       Color=" Color.Primary">
+                Add New Answer
+            </MudButton>
+
+            <MudButton OnClick="@OnValidSubmit"
+                       Variant="Variant.Filled"
+                       Color="Color.Success">
+                Send answers
+            </MudButton>
+        </div>
+
+    </MudGrid>
+</MudPaper>
+
+<style>
+    .custom-button-group {
+        display: flex;
+        justify-content: space-between;
+        margin: 30px;
+        gap: 20px;
+    }
+</style>
 
 @code {
-    AnswerRequestDto model = new();
+    private AnswersQuestionRequestDto answersQuestion = new AnswersQuestionRequestDto { Answers = new List<AnswerRequestDto>() };
+    private string? errorMessage;
+    private AnswersQuestionRequestDto? responseContent;
 
-    public class DisplayNameLabelClass
+    private void AddAnswer()
     {
-        [Label("String LabelAttribute")]
-        public string? String { get; set; }
-        [Label("Boolean LabelAttribute")]
-        public bool Boolean { get; set; }
+        answersQuestion?.Answers?.Add(new AnswerRequestDto());
     }
 
+    private void DeleteAnswer(AnswerRequestDto answer)
+    {
+        answersQuestion?.Answers?.Remove(answer);
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (string.IsNullOrEmpty(answersQuestion.Path))
+        {
+            answersQuestion.Path = _questionStateContainer?.Value?.QuestionPath;
+            ;
+        }
+
+        var response = await _http.PostAsJsonAsync("api/Answers/upload", answersQuestion);
+
+        if (response.IsSuccessStatusCode)
+        {
+            _navigationManager.NavigateTo("/myquizzes");
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
 }
+

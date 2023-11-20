@@ -48,27 +48,15 @@
             </MudCard>
         </MudItem>
 
-        <MudItem xs="12" sm="5">
-            <MudPaper Class="pa-4 mud-height-full">
-                <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
-                @if (success)
-                {
-                    <MudText Color="Color.Success">Success</MudText>
-                }
-                else
-                {
-                    <MudText Color="@Color.Error">
-                        <ValidationSummary />
-                    </MudText>
-                }
-            </MudPaper>
-        </MudItem>
+        @if (success)
+        {
+            <MudItem xs="12" sm="5">
+                <MudPaper Class="pa-4 mud-height-full">
+                    <MudText Color="Color.Success">@successMessage</MudText>
+                </MudPaper>
+            </MudItem>
+        }
 
-        <MudItem xs="12">
-            <MudText Typo="Typo.body2" Align="Align.Center">
-                Fill out the form correctly to see the success message.
-            </MudText>
-        </MudItem>
     </MudGrid>
 </EditForm>
 
@@ -90,6 +78,7 @@
         if (response.IsSuccessStatusCode)
         {
             success = true;
+            successMessage = "File uploaded successfully!";
             var responseContent = await response.Content.ReadFromJsonAsync<QuestionRequestDto>();
         }
         else

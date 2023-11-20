@@ -17,6 +17,34 @@
     <label>
         <InputFile OnChange="@OpenFile" />
     </label>
+
+    @if (selectedFile != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                File: @selectedFile.Name
+                <br />
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success"
+                         style="margin-top: 15px"
+                         role="alert">
+                        @successMessage
+                        @mediaResponse?.StoredFileName
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-warning"
+                         style="margin-top: 15px"
+                         role="alert">
+                        @errorMessage
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
     <div style="margin-top: 15px">
         <button class="btn btn-block btn-success"
         @onclick="async () => await LoadFiles()">
@@ -25,33 +53,6 @@
     </div>
 
 </p>
-
-@if (selectedFile != null)
-{
-    <div class="card">
-        <div class="card-body">
-            File: @selectedFile.Name
-            <br />
-            @if (!string.IsNullOrEmpty(successMessage))
-            {
-                <div class="alert alert-success"
-                     style="margin-top: 15px"
-                     role="alert">
-                    @successMessage
-                    @mediaResponse?.StoredFileName
-                </div>
-            }
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-warning"
-                     style="margin-top: 15px"
-                     role="alert">
-                    @errorMessage
-                </div>
-            }
-        </div>
-    </div>
-}
 
 
 @code {
@@ -115,7 +116,7 @@
                 }
                 else
                 {
-                    errorMessage = "Error uploading file";
+                    errorMessage = response.ReasonPhrase;
                     _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}", selectedFile.Name, response.StatusCode);
                 }
             }

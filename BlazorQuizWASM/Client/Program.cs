@@ -1,5 +1,6 @@
 using BlazorQuizWASM.Client;
 using BlazorQuizWASM.Client.Services;
+using BlazorQuizWASM.Shared.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -22,6 +23,8 @@ namespace BlazorQuizWASM.Client
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("BlazorQuizWASM.ServerAPI"));
 
             builder.Services.AddScoped<QuizService>();
+            builder.Services.AddSingleton<MediaStateContainer>();
+
 
             builder.Services.AddMudServices();
 

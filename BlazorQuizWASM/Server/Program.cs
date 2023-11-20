@@ -94,9 +94,10 @@ namespace BlazorQuizWASM
             {
                 options.AddPolicy("AllowEverything", builder =>
                 {
-                    builder.AllowAnyOrigin()
-                           .AllowAnyMethod()
-                           .AllowAnyHeader();
+                    builder.AllowAnyMethod()
+                           .AllowAnyHeader()
+                           .SetIsOriginAllowed(origin => true)
+                           .AllowCredentials();
                 });
             });
 

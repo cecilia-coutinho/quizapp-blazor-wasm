@@ -1,0 +1,30 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using BlazorQuizWASM.Shared.DTO;
+@using BlazorQuizWASM.Shared.Services;
+@inject QuestionStateContainer _questionStateContainer;
+
+<MudCard>
+    <MudForm>
+        <MudCardContent>
+            <MudTextField For="@(() => model.Content)" Label="Parameter Label" />
+            <MudSwitch For="@(() => model.IsCorrect)" Label="Parameter Label" />
+        </MudCardContent>
+        <MudButtonGroup>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Submit</MudButton>
+            <MudButton ButtonType="ButtonType.Reset" Variant="Variant.Filled" Color="Color.Secondary">Reset</MudButton>
+        </MudButtonGroup>
+    </MudForm>
+</MudCard>
+
+@code {
+    AnswerRequestDto model = new();
+
+    public class DisplayNameLabelClass
+    {
+        [Label("String LabelAttribute")]
+        public string? String { get; set; }
+        [Label("Boolean LabelAttribute")]
+        public bool Boolean { get; set; }
+    }
+
+}

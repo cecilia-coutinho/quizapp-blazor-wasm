@@ -4,8 +4,10 @@
 @using MudBlazor;
 @using System.Text.Json;
 @using System.Text;
+@using Newtonsoft.Json;
 @using BlazorQuizWASM.Shared.Services;
-@inject MediaStateContainer _stateContainer;
+@inject MediaStateContainer _mediaStateContainer;
+@inject QuestionStateContainer _questionStateContainer;
 @inject HttpClient _http;
 
 
@@ -52,7 +54,7 @@
         {
             <MudItem xs="12" sm="5">
                 <MudPaper Class="pa-4 mud-height-full">
-                    <MudText Color="Color.Success">@successMessage</MudText>
+                    <MudText Color="Color.Success">@successMessage , Path: @responseContent?.QuestionPath.ToLower().Replace(" ", "-");</MudText>
                 </MudPaper>
             </MudItem>
         }
@@ -65,12 +67,13 @@
     bool success;
     private string? successMessage;
     private string? errorMessage;
+    private QuestionRequestDto? responseContent = new();
 
     private async Task OnValidSubmit()
     {
         if (string.IsNullOrEmpty(registerTitleModel.MediaFileName))
         {
-            registerTitleModel.MediaFileName = _stateContainer.Value.StoredFileName;
+            registerTitleModel.MediaFileName = _mediaStateContainer?.Value?.StoredFileName;
         }
 
         var response = await _http.PostAsJsonAsync("api/Questions/upload", registerTitleModel);
@@ -79,7 +82,12 @@
         {
             success = true;
             successMessage = "File uploaded successfully!";
-            var responseContent = await response.Content.ReadFromJsonAsync<QuestionRequestDto>();
+            responseContent = await response.Content.ReadFromJsonAsync<QuestionRequestDto>();
+
+            if (responseContent != null)
+            {
+                _questionStateContainer.SetValue(responseContent);
+            }
         }
         else
         {

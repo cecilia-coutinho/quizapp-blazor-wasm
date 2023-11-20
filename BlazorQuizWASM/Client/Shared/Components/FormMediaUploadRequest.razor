@@ -106,7 +106,6 @@
                     {
                       mediaResponse = JsonConvert.DeserializeObject<MediaFileResponseDto>(responseContent);
 
-                        //TODO: not passing the value
                         _stateContainer.SetValue(mediaResponse);
 
                         successMessage = "File uploaded successfully!";

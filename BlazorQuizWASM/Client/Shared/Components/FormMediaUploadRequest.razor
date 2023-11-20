@@ -1,20 +1,27 @@
 ﻿@using System.Net.Http.Headers
 @using BlazorQuizWASM.Shared.DTO;
+@using BlazorQuizWASM.Shared.Services;
+@using Microsoft.AspNetCore.Authorization;
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 @using Microsoft.Extensions.Logging
+@using System.Text.Json;
+@using System.Text;
+@using Newtonsoft.Json;
 @inject HttpClient _http;
-@inject ILogger<FormMediaUploadRequest> _logger
+@inject ILogger<FormMediaUploadRequest> _logger;
+@inject MediaStateContainer _stateContainer;
+@implements IDisposable;
+@attribute [Authorize]
 
 <p>
     <label>
         <InputFile OnChange="@OpenFile" />
     </label>
     <div style="margin-top: 15px">
-    <button 
-        class="btn btn-block btn-success" 
+        <button class="btn btn-block btn-success"
         @onclick="async () => await LoadFiles()">
-        Upload File
-    </button> 
+            Upload File
+        </button>
     </div>
 
 </p>
@@ -27,32 +34,36 @@
             <br />
             @if (!string.IsNullOrEmpty(successMessage))
             {
-                <div 
-                    class="alert alert-success" 
-                    style="margin-top: 15px"
-                    role="alert">
+                <div class="alert alert-success"
+                     style="margin-top: 15px"
+                     role="alert">
                     @successMessage
+                    @mediaResponse?.StoredFileName
                 </div>
             }
-            @if (!string.IsNullOrEmpty(failMessage))
+            @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div 
-                    class="alert alert-warning"
-                    style="margin-top: 15px"
-                    role="alert">
-                    @successMessage
+                <div class="alert alert-warning"
+                     style="margin-top: 15px"
+                     role="alert">
+                    @errorMessage
                 </div>
             }
         </div>
     </div>
 }
 
+
 @code {
     private IBrowserFile? selectedFile;
     private long maxFileSize = 1024 * 1024;
     private bool shouldRender;
-    private string successMessage = string.Empty;
-    private string failMessage = string.Empty;
+    private string? successMessage;
+    private string? errorMessage;
+    private MediaFileResponseDto? mediaResponse = new();
+
+    [Parameter]
+    public string? storedFileName { get; set; }
 
     private async Task OpenFile(InputFileChangeEventArgs e)
     {
@@ -84,20 +95,40 @@
                 //Token requests occur automatically.
                 //await _quizService.RequestAuthToken();
                 var response = await _http.PostAsync("api/MediaFiles/Upload", content);
+                //mediaResponse = response.Content.ReadFromJsonAsync<MediaFileResponseDto>();
 
                 if (response.IsSuccessStatusCode)
                 {
-                    successMessage = "File uploaded successfully!";
-                    _logger.LogInformation(successMessage);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    if (mediaResponse != null)
+                    {
+                      mediaResponse = JsonConvert.DeserializeObject<MediaFileResponseDto>(responseContent);
+
+                        //TODO: not passing the value
+                        _stateContainer.SetValue(mediaResponse);
+
+                        successMessage = "File uploaded successfully!";
+                        _logger.LogInformation(successMessage);
+                        StateHasChanged();
+                    }
                 }
                 else
                 {
-                    failMessage = "Error uploading file";
+                    errorMessage = "Error uploading file";
                     _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}", selectedFile.Name, response.StatusCode);
-
                 }
             }
             shouldRender = true;
-        }       
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _stateContainer.OnStateChange += StateHasChanged;
+    }
+    public void Dispose()
+    {
+        _stateContainer.OnStateChange -= StateHasChanged;
     }
 }

@@ -1,0 +1,102 @@
+﻿@using System.ComponentModel.DataAnnotations;
+@using BlazorQuizWASM.Shared.DTO;
+@using Microsoft.AspNetCore.Authorization;
+@using MudBlazor;
+@using System.Text.Json;
+@using System.Text;
+@using BlazorQuizWASM.Shared.Services;
+@inject MediaStateContainer _stateContainer;
+@inject HttpClient _http;
+
+
+<EditForm Model="@registerTitleModel" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Title"
+                    @bind-Value="registerTitleModel.Title"
+                                  For="@(() => registerTitleModel.Title)"
+                                  Class="mt-3"
+                                  Immediate="true" />
+
+                    <MudTextField Label="Question Path"
+                    @bind-Value="registerTitleModel.QuestionPath"
+                                  For="@(() => registerTitleModel.QuestionPath)"
+                                  HelperText="Max.25 characters"
+                                  Class="mt-3"
+                                  Immediate="true" />
+
+                    <MudTextField Label="Time Limit"
+                    @bind-Value="registerTitleModel.TimeLimit"
+                                  For="@(() => registerTitleModel.TimeLimit)"
+                                  HelperText="Time in minutes"
+                                  Class="mt-3"
+                                  Immediate="true"
+                                  InputType="InputType.Number" />
+
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Class="ml-auto">
+                        Submit
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="5">
+            <MudPaper Class="pa-4 mud-height-full">
+                <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        <ValidationSummary />
+                    </MudText>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                Fill out the form correctly to see the success message.
+            </MudText>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+@code {
+    QuestionRequestDto registerTitleModel = new QuestionRequestDto();
+    bool success;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private async Task OnValidSubmit()
+    {
+        if (string.IsNullOrEmpty(registerTitleModel.MediaFileName))
+        {
+            registerTitleModel.MediaFileName = _stateContainer.Value.StoredFileName;
+        }
+
+        var response = await _http.PostAsJsonAsync("api/Questions/upload", registerTitleModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            success = true;
+            var responseContent = await response.Content.ReadFromJsonAsync<QuestionRequestDto>();
+        }
+        else
+        {
+            success = false;
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+}

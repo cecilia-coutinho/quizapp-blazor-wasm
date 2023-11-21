@@ -1,5 +1,4 @@
-﻿using BlazorQuizWASM.Server.CustomActionFilters;
-using BlazorQuizWASM.Server.Models.Domain;
+﻿using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Authorization;
@@ -10,23 +9,24 @@ namespace BlazorQuizWASM.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class QuestionsController : ControllerBase
     {
         private readonly IQuestionRepository _questionRepository;
         private readonly IMediaFileRepository _mediaFileRepository;
+        private readonly IAnswerRepository _answerRepository;
 
-        public QuestionsController(IQuestionRepository questionRepository, IMediaFileRepository mediaFileRepository)
+        public QuestionsController(IQuestionRepository questionRepository, IMediaFileRepository mediaFileRepository, IAnswerRepository answerRepository)
         {
             _questionRepository = questionRepository;
             _mediaFileRepository = mediaFileRepository;
+            _answerRepository = answerRepository;
         }
 
         // CREATE Question
         // POST: api/Questions/upload
         [HttpPost]
         [Route("upload")]
-        [ValidateModel]
-        [Authorize]
         public async Task<ActionResult> CreateQuestion([FromBody] QuestionRequestDto questionRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -35,7 +35,7 @@ namespace BlazorQuizWASM.Server.Controllers
             var mediaEntity = await _mediaFileRepository.GetMedia(questionRequestDto.MediaFileName);
             if (mediaEntity == null)
             {
-              return Problem( "Media Entity not found", statusCode: 500);
+                return Problem("Media Entity not found", statusCode: 500);
             }
 
             var questionpath = questionRequestDto.QuestionPath.ToLower().Replace(" ", "-");
@@ -67,7 +67,6 @@ namespace BlazorQuizWASM.Server.Controllers
         // GET questions
         // GET: api/Questions/
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult> GetAllPublished(
             [FromQuery] string? filterOn,
             [FromQuery] string? filterQuery,
@@ -98,7 +97,6 @@ namespace BlazorQuizWASM.Server.Controllers
         // GET: api/Questions/questions-by-user
         [HttpGet]
         [Route("questions-by-user")]
-        [Authorize]
         public async Task<ActionResult> GetAllByUser(
             [FromQuery] string? filterOn,
             [FromQuery] string? filterQuery,
@@ -120,20 +118,89 @@ namespace BlazorQuizWASM.Server.Controllers
 
             var questions = questionDomainModel
             .Where(q => q.FkUserId == userId)
-            .Select(q => q.Title)
+            .Select(q => new
+            {
+                Title = q.Title,
+                IsPublished = q.IsPublished,
+                QuestionPath = q.QuestionPath
+            })
             .ToList();
 
             return Ok(new { Question = questions });
         }
 
 
+        // GET questions with answers
+        // GET: api/Questions/questions
+        [HttpGet("questions-with-answers")]
+        public async Task<ActionResult> GetAllQuestionsWithAnswers(
+            [FromQuery] string? filterOn,
+            [FromQuery] string? filterQuery,
+            [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
+            )
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var questionDomainModel = await _questionRepository
+                .GetAllAsync(
+                filterOn,
+                filterQuery,
+                sortBy,
+                isAscending ?? true,
+                pageNumber,
+                pageSize);
+
+            var questions = questionDomainModel
+              .Where(q => q.FkUserId == userId)
+              .Select(q => new 
+              {
+                  Title = q.Title,
+                  IsPublished = q.IsPublished,
+                  QuestionPath = q.QuestionPath,
+                  FkQuestionId = q.QuestionId,
+                  TimeLimit = q.TimeLimit
+              })
+              .ToList();
+
+            var answersQuestionRequestDtoList = new List<AnswersQuestionResponseDto>();
+
+            foreach (var question in questions)
+            {
+                var answers = await _answerRepository.GetAnswerToQuestionAsync(question.FkQuestionId);
+
+                var answersQuestionRequestDto = new AnswersQuestionResponseDto
+                {
+                    Question = new QuestionRequestDto
+                    {
+                        Title = question.Title,
+                        IsPublished = question.IsPublished,
+                        QuestionPath = question.QuestionPath,
+                    },
+                    Answers = answers.Select(a => new AnswerRequestDto
+                    {
+                        Content = a.Content,
+                        IsCorrect = a.IsCorrect
+                    }).ToList()
+                };
+
+                answersQuestionRequestDtoList.Add(answersQuestionRequestDto);
+            }
+            return Ok(answersQuestionRequestDtoList);
+        }
+
+
         // GET questions by Id
         // GET: api/Questions/question/{questionPath}
         [HttpGet("question/{questionPath}")]
-        public async Task<ActionResult> GetQuestion(string questionPath)
+        public async Task<ActionResult> GetQuestionWithAnswers(string questionPath)
         {
-            var question = await _questionRepository.GetQuestionByPath(questionPath);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionPath, userId);
             var questionId = question.QuestionId;
+
+            var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
+            var response = answers.Select(a => new { a.Content, a.IsCorrect });
 
             var questionDomainModel = await _questionRepository.GetByIdAsync(questionId);
 
@@ -150,8 +217,6 @@ namespace BlazorQuizWASM.Server.Controllers
         // UPDATE question By Id
         // PUT: api/Questions/question/{id}
         [HttpPut("question/{questionPath}")]
-        [ValidateModel]
-        [Authorize]
         public async Task<IActionResult> Update(string questionPath, [FromForm] QuestionRequestDto questionRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -199,7 +264,6 @@ namespace BlazorQuizWASM.Server.Controllers
         // DELETE question By Id
         // DELETE: api/Questions/question/{id}
         [HttpDelete("question/{questionPath}")]
-        [Authorize]
         public async Task<IActionResult> Delete([FromRoute] string questionPath)
         {
             //get question Id

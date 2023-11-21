@@ -24,17 +24,17 @@ namespace BlazorQuizWASM.Server.Controllers
         }
 
         // GET Answers By Question
-        // POST: api/Answers/answer-by-question
-        [HttpPost]
+        // GET: api/Answers/answer-by-question
+        [HttpGet]
         [ValidateModel]
-        [Route("answer-by-question")]
+        [Route("answer-by-question/{questionPath}")]
         [Authorize]
-        public async Task<ActionResult> GetAnswersByQuestionPost([FromForm] AnswersQuestionRequestDto questionRequestDto)
+        public async Task<ActionResult> GetAnswersByQuestion(string questionPath)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // Get question id
-            var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionRequestDto.Path, userId);
+            var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionPath, userId);
             var questionId = question.QuestionId;
 
             var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);

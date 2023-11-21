@@ -1,18 +1,73 @@
 ﻿@page "/myquizzes"
+@using System.ComponentModel.DataAnnotations;
+@using BlazorQuizWASM.Shared.DTO;
+@using Microsoft.AspNetCore.Authorization;
+@using MudBlazor;
+@using System.Text.Json;
+@using System.Text;
+@using BlazorQuizWASM.Shared.Services;
+@inject HttpClient _http;
 
 <PageTitle>My Quizzes</PageTitle>
 
-<h1>My Quizzes</h1>
+<MudExpansionPanels MultiExpansion="true">
+    @if (questions != null)
+    {
+        <MudExpansionPanel Text="Published Questions">
+            @foreach (var question in questions.question)
+            {
+                @if (question.IsPublished == true)
+                {
+                    <MudExpansionPanel Text="@question.Title">
+                        Panel Content
+                    </MudExpansionPanel>
+                }
+            }
+        </MudExpansionPanel>
 
-<p role="status">Current count: @currentCount</p>
+        <MudExpansionPanel Text="Not Published Questions">
+            @foreach (var question in questions.question)
+            {
+                @if (question.IsPublished != true)
+                {
+                    <MudExpansionPanel Text="@question.Title">
+                        Panel Content
+                    </MudExpansionPanel>
+                }
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+            }
+        </MudExpansionPanel>
+    }
+</MudExpansionPanels>
 
 @code {
-    private int currentCount = 0;
+    private QuestionApiResponseDto? questions;
+    private string? errorMessage;
 
-    private void IncrementCount()
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        await FetchQuestions();
+    }
+
+    private async Task FetchQuestions()
+    {
+        var response = await _http.GetAsync("/api/Questions/questions-by-user");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonString = await response.Content.ReadAsStringAsync();
+            questions = JsonSerializer.Deserialize<QuestionApiResponseDto>(jsonString);
+
+            if (questions == null || questions.question == null || !questions.question.Any())
+            {
+                errorMessage = "Unexpected response - 'question' property not found or empty.";
+                throw new Exception(errorMessage);
+            }
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
     }
 }

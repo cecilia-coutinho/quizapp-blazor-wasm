@@ -6,62 +6,119 @@
 @using System.Text.Json;
 @using System.Text;
 @using BlazorQuizWASM.Shared.Services;
+@using BlazorQuizWASM.Client.Shared.Components;
 @inject HttpClient _http;
 
 <PageTitle>My Quizzes</PageTitle>
 
-<MudExpansionPanels MultiExpansion="true">
-    @if (questions != null)
-    {
+@if (questions != null)
+{
+    <MudExpansionPanels MultiExpansion="true">
         <MudExpansionPanel Text="Published Questions">
-            @foreach (var question in questions.question)
+            @foreach (var question in FilteredQuestions(true))
             {
-                @if (question.IsPublished == true)
-                {
-                    <MudExpansionPanel Text="@question.Title">
-                        Panel Content
-                    </MudExpansionPanel>
-                }
+                <MudExpansionPanel Text="@question?.Question?.Title">
+                    <ul>
+                        @if (question?.Answers != null)
+                        {
+                            @foreach (var answer in question.Answers)
+                            {
+                                <li>
+                                    @answer.Content
+                                    <b>@(answer.IsCorrect ? "(true)" : "(false)")</b>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </MudExpansionPanel>
             }
         </MudExpansionPanel>
 
         <MudExpansionPanel Text="Not Published Questions">
-            @foreach (var question in questions.question)
+            @foreach (var question in FilteredQuestions(false))
             {
-                @if (question.IsPublished != true)
-                {
-                    <MudExpansionPanel Text="@question.Title">
-                        Panel Content
-                    </MudExpansionPanel>
-                }
-
+                <MudExpansionPanel Text="@question?.Question?.Title">
+                    <ul>
+                        @if (question?.Answers != null)
+                        {
+                            @foreach (var answer in question.Answers)
+                            {
+                                <li>
+                                    @answer.Content
+                                    <b>@(answer.IsCorrect ? "(true)" : "(false)")</b>
+                                </li>
+                            }
+                        }
+                    </ul>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success">Publish</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error">Delete</MudButton>
+                </MudExpansionPanel>
             }
         </MudExpansionPanel>
-    }
-</MudExpansionPanels>
+    </MudExpansionPanels>
+}
+else
+{
+    <MudExpansionPanel>@errorMessage</MudExpansionPanel>
+}
+
+
+
+
 
 @code {
-    private QuestionApiResponseDto? questions;
-    private string? errorMessage;
+    private List<AnswersQuestionResponseDto>? questions;
+    private string? errorMessage = "No questions here";
 
     protected override async Task OnInitializedAsync()
     {
         await FetchQuestions();
     }
 
+    private IEnumerable<AnswersQuestionResponseDto> FilteredQuestions(bool isPublished)
+    {
+        return questions?.Where(q => q.Question != null && q.Question.IsPublished == isPublished);
+    }
+
+    // public List<AnswersQuestionResponseDto>? GetQuestionsWithAnswers(List<AnswersQuestionResponseDto> questions)
+    // {
+    //     switch (questions)
+    //     {
+    //         case questions.Where(q => q.Question.IsPublished == true):
+    //             questions.Select(q => new AnswersQuestionResponseDto
+    //                 {
+    //                     Question = q.Question,
+    //                     Answers = q.Answers
+    //                 })
+    //           .ToList();
+    //             break;
+    //         case questions.Where(q => q.Question.IsPublished != true):
+    //             questions.Select(q => new AnswersQuestionResponseDto
+    //                 {
+    //                     Question = q.Question,
+    //                     Answers = q.Answers
+    //                 })
+    //           .ToList();
+    //             break;
+    //         case Default:
+    //             errorMessage = "No questions here";
+    //             return null;
+    //     }
+    // }
+
     private async Task FetchQuestions()
     {
-        var response = await _http.GetAsync("/api/Questions/questions-by-user");
+        var response = await _http.GetAsync("/api/Questions/questions-with-answers");
 
         if (response.IsSuccessStatusCode)
         {
-            var jsonString = await response.Content.ReadAsStringAsync();
-            questions = JsonSerializer.Deserialize<QuestionApiResponseDto>(jsonString);
+            questions = await response.Content.ReadFromJsonAsync<List<AnswersQuestionResponseDto>>();
 
-            if (questions == null || questions.question == null || !questions.question.Any())
+
+            if (questions == null)
             {
-                errorMessage = "Unexpected response - 'question' property not found or empty.";
-                throw new Exception(errorMessage);
+                errorMessage = "There was an error deserializing the response!";
+                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
             }
         }
         else

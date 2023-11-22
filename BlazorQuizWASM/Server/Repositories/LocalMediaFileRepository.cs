@@ -48,14 +48,37 @@ namespace BlazorQuizWASM.Server.Repositories
 
             return media;
         }
-        public async Task<MediaFile?> GetMedia(string MediaFileName)
+        public async Task<MediaFile?> GetMedia(string mediaFileName)
         {
             if (_dbContext.MediaFiles == null)
             {
                 throw new Exception("Entity 'MediaFiles' not found.");
             }
 
-            var media = await _dbContext.MediaFiles.FirstOrDefaultAsync(x => x.MediaFileName == MediaFileName);
+            var media = await _dbContext.MediaFiles.FirstOrDefaultAsync(x => x.MediaFileName == mediaFileName);
+
+            if (media == null)
+            {
+                return null;
+            }
+
+            return media;
+        }
+
+        public async Task<MediaFile?> GetMediaPath(Guid mediaFileId)
+        {
+            if (_dbContext.MediaFiles == null)
+            {
+                throw new Exception("Entity 'MediaFiles' not found.");
+            }
+
+            var media = await _dbContext.MediaFiles
+                .Where(x => x.MediaFileId == mediaFileId)
+                .Select(m => new MediaFile
+                {
+                    MediaFileName = m.MediaFileName,
+                    FilePath = m.FilePath
+                }).FirstOrDefaultAsync();
 
             if (media == null)
             {

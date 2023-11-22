@@ -5,11 +5,15 @@
 @using MudBlazor;
 @using System.Text.Json;
 @using System.Text;
-@using BlazorQuizWASM.Shared.Services;
-@using BlazorQuizWASM.Client.Shared.Components;
 @inject HttpClient _http;
 
 <PageTitle>My Quizzes</PageTitle>
+
+<MudText Color="Color.Primary"
+         Typo="Typo.h3"
+         Align="Align.Center">
+    My Quizzes
+</MudText>
 
 @if (questions != null)
 {
@@ -25,7 +29,18 @@
                             {
                                 <li>
                                     @answer.Content
-                                    <b>@(answer.IsCorrect ? "(true)" : "(false)")</b>
+                                    @if (answer.IsCorrect)
+                                    {
+                                        <MudChip Color="Color.Info">
+                                            True
+                                        </MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip Color="Color.Warning">
+                                            False
+                                        </MudChip>
+                                    }
                                 </li>
                             }
                         }
@@ -45,7 +60,18 @@
                             {
                                 <li>
                                     @answer.Content
-                                    <b>@(answer.IsCorrect ? "(true)" : "(false)")</b>
+                                    @if (answer.IsCorrect)
+                                    {
+                                        <MudChip Color="Color.Info">
+                                            True
+                                        </MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip Color="Color.Warning">
+                                            False
+                                        </MudChip>
+                                    }
                                 </li>
                             }
                         }

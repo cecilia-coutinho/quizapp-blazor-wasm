@@ -12,7 +12,7 @@ namespace BlazorQuizWASM.Shared.DTO
         public string? MediaFileName { get; set; }
 
         [NotNull]
-        [JsonPropertyName("title")]
+        //[JsonPropertyName("title")]
         public string? Title { get; set; }
 
         [NotNull]
@@ -25,7 +25,7 @@ namespace BlazorQuizWASM.Shared.DTO
         public int TimeLimit { get; set; } = 5;
 
         [NotNull]
-        [JsonPropertyName("isPublished")]
+        //[JsonPropertyName("isPublished")]
         public bool IsPublished { get; set; } = false;
     }
 }

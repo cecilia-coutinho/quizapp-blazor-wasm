@@ -7,6 +7,7 @@ namespace BlazorQuizWASM.Server.Repositories
     public interface IMediaFileRepository
     {
         Task<MediaFile> Upload(MediaFile media);
-        Task<MediaFile?> GetMedia(string MediaFileName);
+        Task<MediaFile?> GetMedia(string mediaFileName);
+        Task<MediaFile?> GetMediaPath(Guid mediaFileId);
     }
 }

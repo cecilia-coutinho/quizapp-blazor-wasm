@@ -9,7 +9,7 @@ namespace BlazorQuizWASM.Shared.DTO
 {
     public class AnswersQuestionResponseDto
     {
-        public QuestionRequestDto? Question { get; set; }
+        public QuestionResponseDto? Question { get; set; }
         public List<AnswerRequestDto>? Answers { get; set; }
     }
 }

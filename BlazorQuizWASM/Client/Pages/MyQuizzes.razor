@@ -50,8 +50,21 @@
                             }
                         }
                     </ul>
-                    <MudButton Variant="Variant.Filled" Color="Color.Success">Publish</MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Error">Delete</MudButton>
+                    @if (question?.Question != null)
+                    {
+                        @if (question?.Answers != null)
+                        {
+                            <MudButton OnClick="@(async() => await PublishQuestion(question.Question.QuestionPath))"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Success">
+                                Publish
+                            </MudButton>
+                        }
+
+                        <MudButton OnClick="@(async() => await DeleteQuestion(question.Question.QuestionPath))"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Error">Delete</MudButton>
+                    }
                 </MudExpansionPanel>
             }
         </MudExpansionPanel>
@@ -61,10 +74,6 @@ else
 {
     <MudExpansionPanel>@errorMessage</MudExpansionPanel>
 }
-
-
-
-
 
 @code {
     private List<AnswersQuestionResponseDto>? questions;
@@ -77,34 +86,8 @@ else
 
     private IEnumerable<AnswersQuestionResponseDto> FilteredQuestions(bool isPublished)
     {
-        return questions?.Where(q => q.Question != null && q.Question.IsPublished == isPublished);
+        return questions.Where(q => q.Question != null && q.Question?.IsPublished == isPublished);
     }
-
-    // public List<AnswersQuestionResponseDto>? GetQuestionsWithAnswers(List<AnswersQuestionResponseDto> questions)
-    // {
-    //     switch (questions)
-    //     {
-    //         case questions.Where(q => q.Question.IsPublished == true):
-    //             questions.Select(q => new AnswersQuestionResponseDto
-    //                 {
-    //                     Question = q.Question,
-    //                     Answers = q.Answers
-    //                 })
-    //           .ToList();
-    //             break;
-    //         case questions.Where(q => q.Question.IsPublished != true):
-    //             questions.Select(q => new AnswersQuestionResponseDto
-    //                 {
-    //                     Question = q.Question,
-    //                     Answers = q.Answers
-    //                 })
-    //           .ToList();
-    //             break;
-    //         case Default:
-    //             errorMessage = "No questions here";
-    //             return null;
-    //     }
-    // }
 
     private async Task FetchQuestions()
     {
@@ -120,6 +103,36 @@ else
                 errorMessage = "There was an error deserializing the response!";
                 throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
             }
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+
+    private async Task PublishQuestion(string questionPath)
+    {
+        var response = await _http.PutAsJsonAsync($"/api/Questions/question/{questionPath}", questionPath);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await FetchQuestions();
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+
+    private async Task DeleteQuestion(string questionPath)
+    {
+        var response = await _http.DeleteAsync($"/api/Questions/question/{questionPath}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await FetchQuestions();
         }
         else
         {

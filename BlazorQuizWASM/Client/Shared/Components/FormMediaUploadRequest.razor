@@ -58,7 +58,6 @@
 @code {
     private IBrowserFile? selectedFile;
     private long maxFileSize = 1024 * 1024;
-    private bool shouldRender;
     private string? successMessage;
     private string? errorMessage;
     private MediaFileResponseDto? mediaResponse = new();
@@ -74,7 +73,6 @@
 
     private async Task LoadFiles()
     {
-        shouldRender = false;
         bool upload = false;
         using var content = new MultipartFormDataContent();
 
@@ -94,9 +92,8 @@
             if (upload)
             {
                 //Token requests occur automatically.
-                //await _quizService.RequestAuthToken();
+                //no need of: await _quizService.RequestAuthToken();
                 var response = await _http.PostAsync("api/MediaFiles/Upload", content);
-                //mediaResponse = response.Content.ReadFromJsonAsync<MediaFileResponseDto>();
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -119,7 +116,6 @@
                     _logger.LogError("Error uploading file {FileName}: Status code {StatusCode}", selectedFile.Name, response.StatusCode);
                 }
             }
-            shouldRender = true;
         }
     }
 

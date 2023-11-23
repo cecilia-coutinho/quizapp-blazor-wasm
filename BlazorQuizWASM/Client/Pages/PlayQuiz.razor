@@ -1,9 +1,138 @@
 ﻿@page "/playquiz"
+@using BlazorQuizWASM.Shared.DTO;
+@using Microsoft.AspNetCore.Authorization;
+@using MudBlazor;
+@using System.Text.Json;
+@using System.Text;
+@inject HttpClient _http;
 
 <PageTitle>Play Quiz</PageTitle>
 
-<h1>Play Quiz</h1>
+<MudText Color="Color.Primary"
+         Typo="Typo.h3"
+         Align="Align.Center">
+    Play Quiz
+</MudText>
+
+@if (questions != null)
+{
+    @foreach (var question in questions)
+    {
+        <MudExpansionPanels MultiExpansion="true" Dense="true" DisableGutters="true" Class="mt-6">
+            <MudExpansionPanel>
+                <TitleContent>
+                        <div class="d-flex flex-row" style="padding:15px 0;">
+                            <MudText Style="font-size:1.5rem">@question?.Question?.Title</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.QuestionMark" class="mr-3" Style="margin-top:5px"></MudIcon>
+                        </div>
+                </TitleContent>
+                <ChildContent>
+                    <MudImage Src="@question?.Question?.MediaFilePath"
+                              Alt="@question?.Question?.QuestionPath"
+                              Fluid="true"
+                              Elevation="25"
+                              Class="rounded-lg" />
+                    <MudList>
+                        @if (question?.Answers != null)
+                        {
+                            @foreach (var answer in question.Answers)
+                            {
+                                <MudItem>
+                                    <MudCheckBox @bind-Checked="@isCheckedDict[answer.Content]"
+                                                 Color="Color.Primary">
+                                        <MudText>@answer.Content</MudText>
+                                    </MudCheckBox>
+                                </MudItem>
+                            }
+                        }
+                    </MudList>
+                    <MudButton EndIcon="@Icons.Material.Filled.Send"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="() => OnButtonClick(question)"
+                    Style="margin-bottom:30px; margin-left:15px">
+                        Submit
+                    </MudButton>
+                </ChildContent>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    }
+}
+else
+{
+    <MudExpansionPanel>@errorMessage</MudExpansionPanel>
+}
 
 @code {
+    private List<AnswersQuestionResponseDto>? questions;
+    private string? errorMessage = "No questions here";
+    private Dictionary<string, bool> isCheckedDict { get; set; } = new Dictionary<string, bool>();
 
+    void OnButtonClick(AnswersQuestionResponseDto question)
+    {
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchQuestions();
+        InitializeCheckedDict();
+    }
+
+    private void InitializeCheckedDict()
+    {
+        isCheckedDict = questions?.SelectMany(q => q.Answers)
+                                  .ToDictionary(answer => answer.Content, _ => false)
+                      ?? new Dictionary<string, bool>();
+    }
+
+    private async Task FetchQuestions()
+    {
+        var response = await _http.GetAsync("/api/Questions");
+
+        if (response.IsSuccessStatusCode)
+        {
+            questions = await response.Content.ReadFromJsonAsync<List<AnswersQuestionResponseDto>>();
+
+
+            if (questions == null)
+            {
+                errorMessage = "There was an error deserializing the response!";
+                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+            }
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+
+    private async Task PublishQuestion(string questionPath)
+    {
+        var response = await _http.PutAsJsonAsync($"/api/Questions/question/{questionPath}", questionPath);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await FetchQuestions();
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+
+    private async Task DeleteQuestion(string questionPath)
+    {
+        var response = await _http.DeleteAsync($"/api/Questions/question/{questionPath}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await FetchQuestions();
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
 }

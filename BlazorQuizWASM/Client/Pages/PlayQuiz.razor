@@ -21,10 +21,10 @@
         <MudExpansionPanels MultiExpansion="true" Dense="true" DisableGutters="true" Class="mt-6">
             <MudExpansionPanel>
                 <TitleContent>
-                        <div class="d-flex flex-row" style="padding:15px 0;">
-                            <MudText Style="font-size:1.5rem">@question?.Question?.Title</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.QuestionMark" class="mr-3" Style="margin-top:5px"></MudIcon>
-                        </div>
+                    <div class="d-flex flex-row" style="padding:15px 0;">
+                        <MudText Style="font-size:1.5rem">@question?.Question?.Title</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.QuestionMark" class="mr-3" Style="margin-top:5px"></MudIcon>
+                    </div>
                 </TitleContent>
                 <ChildContent>
                     <MudImage Src="@question?.Question?.MediaFilePath"
@@ -37,21 +37,39 @@
                         {
                             @foreach (var answer in question.Answers)
                             {
-                                <MudItem>
-                                    <MudCheckBox @bind-Checked="@isCheckedDict[answer.Content]"
-                                                 Color="Color.Primary">
-                                        <MudText>@answer.Content</MudText>
-                                    </MudCheckBox>
-                                </MudItem>
+                                @if (question?.Answers?.Count <= 1)
+                                {
+                                    <MudItem xs="12" sm="6" md="4">
+                                        <MudTextField @bind-Value="@userInput"
+                                                      Label="Answer"
+                                                      Variant="Variant.Outlined">
+                                        </MudTextField>
+                                    </MudItem>
+                                }
+                                else
+                                {
+                                    <MudItem>
+                                        <MudCheckBox @bind-Checked="@isCheckedDict[answer.Content]"
+                                                     Color="Color.Primary">
+                                            <MudText>@answer.Content</MudText>
+                                        </MudCheckBox>
+                                    </MudItem>
+                                }
                             }
                         }
                     </MudList>
                     <MudButton EndIcon="@Icons.Material.Filled.Send"
                                Variant="Variant.Filled"
                                Color="Color.Primary"
-                               OnClick="() => OnButtonClick(question)"
-                    Style="margin-bottom:30px; margin-left:15px">
+                               OnClick="() => CheckAnswer(question)"
+                               Style="margin-bottom:30px; margin-left:15px">
                         Submit
+                    </MudButton>
+                    <MudButton EndIcon="@Icons.Material.Filled.Send"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Style="margin-bottom:30px; margin-left:15px">
+                        CopyLink To Share
                     </MudButton>
                 </ChildContent>
             </MudExpansionPanel>
@@ -67,10 +85,9 @@ else
     private List<AnswersQuestionResponseDto>? questions;
     private string? errorMessage = "No questions here";
     private Dictionary<string, bool> isCheckedDict { get; set; } = new Dictionary<string, bool>();
+    private string? userInput;
+    private bool isScored = false;
 
-    void OnButtonClick(AnswersQuestionResponseDto question)
-    {
-    }
     protected override async Task OnInitializedAsync()
     {
         await FetchQuestions();
@@ -83,6 +100,53 @@ else
                                   .ToDictionary(answer => answer.Content, _ => false)
                       ?? new Dictionary<string, bool>();
     }
+
+    private async Task CheckAnswer(AnswersQuestionResponseDto? question)
+    {
+        if (!string.IsNullOrEmpty(userInput))
+        {
+            var matchingAnswer = question?.Answers?.FirstOrDefault(a => a.Content.Equals(userInput, StringComparison.OrdinalIgnoreCase));
+
+            if (matchingAnswer != null && matchingAnswer.IsCorrect)
+            {
+                isCheckedDict[matchingAnswer.Content] = true;
+                isScored = true;
+            }
+        }
+        else
+        {
+            var selectedAnswers = question?.Answers?.Where(a => isCheckedDict.ContainsKey(a.Content) && isCheckedDict[a.Content]);
+
+            if (selectedAnswers != null && selectedAnswers.Any())
+            {
+                var incorrectAnswer = selectedAnswers.FirstOrDefault(a => !a.IsCorrect);
+                if (incorrectAnswer == null)
+                {
+                    isScored = true;
+                }
+            }
+        }
+        string? questionPath = question?.Question?.QuestionPath;
+        await UploadQuizItem(questionPath);
+    }
+
+    private async Task UploadQuizItem(string? questionPath)
+    {
+        QuizItemRequestDto quizItemRequestDto = new QuizItemRequestDto
+            {
+                IsScored = isScored,
+                TimeSpent = 0,
+                Started_At = DateTime.Now
+            };
+
+        UpdateQuestionRequestDto questionRequestDto = new UpdateQuestionRequestDto
+            {
+                QuestionPath = questionPath,
+            };
+        //api/QuizItems/upload
+    }
+
+
 
     private async Task FetchQuestions()
     {
@@ -98,36 +162,6 @@ else
                 errorMessage = "There was an error deserializing the response!";
                 throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
             }
-        }
-        else
-        {
-            errorMessage = response.ReasonPhrase;
-            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
-        }
-    }
-
-    private async Task PublishQuestion(string questionPath)
-    {
-        var response = await _http.PutAsJsonAsync($"/api/Questions/question/{questionPath}", questionPath);
-
-        if (response.IsSuccessStatusCode)
-        {
-            await FetchQuestions();
-        }
-        else
-        {
-            errorMessage = response.ReasonPhrase;
-            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
-        }
-    }
-
-    private async Task DeleteQuestion(string questionPath)
-    {
-        var response = await _http.DeleteAsync($"/api/Questions/question/{questionPath}");
-
-        if (response.IsSuccessStatusCode)
-        {
-            await FetchQuestions();
         }
         else
         {

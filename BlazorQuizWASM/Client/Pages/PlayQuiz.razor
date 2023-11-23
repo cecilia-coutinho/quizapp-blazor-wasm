@@ -132,21 +132,37 @@ else
 
     private async Task UploadQuizItem(string? questionPath)
     {
-        QuizItemRequestDto quizItemRequestDto = new QuizItemRequestDto
-            {
-                IsScored = isScored,
-                TimeSpent = 0,
-                Started_At = DateTime.Now
-            };
-
-        UpdateQuestionRequestDto questionRequestDto = new UpdateQuestionRequestDto
+        QuizItemQuestionResquestDto quizItemQuestionResquestDto = new QuizItemQuestionResquestDto
             {
                 QuestionPath = questionPath,
+
+                QuizItem = new QuizItemRequestDto
+                {
+                    IsScored = isScored,
+                    TimeSpent = 0,
+                    Started_At = DateTime.Now
+                }
             };
+
+        var response = await _http.PostAsJsonAsync("api/QuizItems/upload", quizItemQuestionResquestDto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var quizItemResponseDto = await response.Content.ReadFromJsonAsync<QuizItemResponseDto>();
+
+            if (quizItemResponseDto == null)
+            {
+                errorMessage = response.ReasonPhrase;
+                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+            }
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
         //api/QuizItems/upload
     }
-
-
 
     private async Task FetchQuestions()
     {
@@ -155,7 +171,6 @@ else
         if (response.IsSuccessStatusCode)
         {
             questions = await response.Content.ReadFromJsonAsync<List<AnswersQuestionResponseDto>>();
-
 
             if (questions == null)
             {

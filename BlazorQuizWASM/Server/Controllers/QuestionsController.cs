@@ -145,6 +145,31 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(answersQuestionResponseDtoList);
         }
 
+        // GET questions by path
+        // GET: api/Questions/question/{questionPath}
+        [HttpGet("question/{questionPath}")]
+        public async Task<ActionResult> GetQuestionWithAnswers(string questionPath)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionPath, userId);
+            var questionId = question.QuestionId;
+
+            var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
+            var response = answers.Select(a => new { a.Content, a.IsCorrect });
+
+            var questionDomainModel = await _questionRepository.GetByIdAsync(questionId);
+
+            if (questionDomainModel == null)
+            {
+                return NotFound();
+            }
+
+            var questionTitle = questionDomainModel.Title;
+
+            return Ok(new { Question = questionTitle });
+        }
+
         // CREATE Question
         // POST: api/Questions/upload
         [HttpPost]
@@ -281,30 +306,7 @@ namespace BlazorQuizWASM.Server.Controllers
         //    return Ok(new { Question = questions });
         //}
 
-        // GET questions by Id
-        // GET: api/Questions/question/{questionPath}
-        //[HttpGet("question/{questionPath}")]
-        //public async Task<ActionResult> GetQuestionWithAnswers(string questionPath)
-        //{
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        //    var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionPath, userId);
-        //    var questionId = question.QuestionId;
-
-        //    var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
-        //    var response = answers.Select(a => new { a.Content, a.IsCorrect });
-
-        //    var questionDomainModel = await _questionRepository.GetByIdAsync(questionId);
-
-        //    if (questionDomainModel == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var questionTitle = questionDomainModel.Title;
-
-        //    return Ok(new { Question = questionTitle });
-        //}
 
         // UPDATE question By Id
         // PUT: api/Questions/question/{id}

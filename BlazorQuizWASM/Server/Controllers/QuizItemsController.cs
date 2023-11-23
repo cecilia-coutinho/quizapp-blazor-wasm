@@ -71,7 +71,7 @@ namespace BlazorQuizWASM.Server.Controllers
                 throw new Exception("Entity 'Questions' not found.");
             }
 
-            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.Title);
+            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.QuestionPath);
 
             if (question == null)
             {
@@ -83,7 +83,7 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(quizItem);
         }
 
-        // POST: api/QuizItems
+        // POST: api/QuizItems/upload
         [HttpPost]
         [Route("upload")]
         [ValidateModel]
@@ -98,7 +98,7 @@ namespace BlazorQuizWASM.Server.Controllers
                 throw new Exception("Entity 'Questions' not found.");
             }
 
-            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.Title);
+            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.QuestionPath);
 
             if (question == null)
             {

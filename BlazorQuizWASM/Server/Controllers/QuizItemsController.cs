@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BlazorQuizWASM.Server.Data;
+﻿using BlazorQuizWASM.Server.CustomActionFilters;
+using BlazorQuizWASM.Server.Models;
 using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using BlazorQuizWASM.Shared.DTO;
-using BlazorQuizWASM.Server.CustomActionFilters;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BlazorQuizWASM.Server.Controllers
 {
@@ -19,13 +14,15 @@ namespace BlazorQuizWASM.Server.Controllers
     [ApiController]
     public class QuizItemsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly IQuizItemRepository _quizItemRepository;
+        private readonly IQuestionRepository _questionRepository;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public QuizItemsController(ApplicationDbContext context, IQuizItemRepository quizItemRepository)
+        public QuizItemsController(IQuizItemRepository quizItemRepository, IQuestionRepository questionRepository, UserManager<ApplicationUser> userManager)
         {
-            _context = context;
             _quizItemRepository = quizItemRepository;
+            _questionRepository = questionRepository;
+            _userManager = userManager;
         }
 
         // GET: api/QuizItems/score
@@ -49,7 +46,7 @@ namespace BlazorQuizWASM.Server.Controllers
                 if (score.IsScored == false)
                 {
                     scores.Remove(score);
-                }            
+                }
             }
 
             var userScore = scores.Count();
@@ -59,19 +56,14 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // GET: api/QuizItems/participants
         [HttpGet]
-        [Route("participants")]
+        [Route("participants/{questionPath}")]
         [Authorize]
-        public async Task<ActionResult<QuizItem>> GetParticipantsPerQuestion([FromForm] UpdateQuestionRequestDto updateQuestionRequestDto)
+        public async Task<ActionResult<QuizItem>> GetParticipantsPerQuestion(string questionPath)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             // Get Question Id
-            if (_context.Questions == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
-
-            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.QuestionPath);
+            var question = await _questionRepository.GetQuestionByPath(questionPath);
 
             if (question == null)
             {
@@ -88,44 +80,51 @@ namespace BlazorQuizWASM.Server.Controllers
         [Route("upload")]
         [ValidateModel]
         [Authorize]
-        public async Task<ActionResult<QuizItem>> Upload([FromForm] QuizItemRequestDto quizItemRequestDto, [FromForm] UpdateQuestionRequestDto updateQuestionRequestDto )
+        public async Task<ActionResult<QuizItem>> Upload([FromForm] QuizItemQuestionResquestDto request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            // Get Question Id
-            if (_context.Questions == null)
+            if (request.QuestionPath != null && request.QuizItem != null && userId != null)
             {
-                throw new Exception("Entity 'Questions' not found.");
+                // Get Question Id
+                var question = await _questionRepository.GetQuestionByPath(request.QuestionPath);
+
+                if (question == null)
+                {
+                    ModelState.AddModelError("QuestionPath", "Please provide a valid question path.");
+                    return BadRequest(ModelState);
+                }
+
+                QuizItem quizItem = new()
+                {
+                    IsScored = request.QuizItem.IsScored,
+                    TimeSpent = request.QuizItem.TimeSpent,
+                    Started_At = request.QuizItem.Started_At,
+                    FkUserId = userId,
+                    FkQuestionId = question.QuestionId
+                };
+
+                await _quizItemRepository.CreateAsync(quizItem);
+
+                var user = await _userManager.FindByIdAsync(userId);
+
+                if (user == null)
+                {
+                    ModelState.AddModelError("UserId", "User not found.");
+                    return BadRequest(ModelState);
+                }
+
+                return Ok(new QuizItemResponseDto
+                {
+                    Nickname = user?.Nickname,
+                    IsScored = quizItem.IsScored,
+                    TimeSpent = quizItem.TimeSpent,
+                    Started_At = quizItem.Started_At
+                });
             }
 
-            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Title == updateQuestionRequestDto.QuestionPath);
-
-            if (question == null)
-            {
-                return NotFound("This question does not exist. Please check your input data and try again.");
-            }
-
-            QuizItem quizItem = new()
-            {
-                IsScored = quizItemRequestDto.IsScored,
-                TimeSpent = quizItemRequestDto.TimeSpent,
-                Started_At = quizItemRequestDto.Started_At,
-                FkUserId = userId,
-                FkQuestionId = question.QuestionId
-            };
-
-            await _quizItemRepository.CreateAsync(quizItem);
-
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            return Ok( new QuizItemResponseDto 
-            {
-                Nickname = user?.Nickname,
-                IsScored = quizItem.IsScored,
-                TimeSpent = quizItem.TimeSpent,
-                Started_At = quizItem.Started_At
-            });
+            ModelState.AddModelError("Invalid data or user is not logged in", "Please provide a valid input data and ensure login validation.");
+            return BadRequest(ModelState);
         }
     }
 }

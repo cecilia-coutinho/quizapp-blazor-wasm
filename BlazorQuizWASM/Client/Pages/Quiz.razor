@@ -1,0 +1,188 @@
+﻿@page "/playquiz/{questionPath}"
+@using BlazorQuizWASM.Shared.DTO;
+@using Microsoft.AspNetCore.Authorization;
+@using MudBlazor;
+@using System.Text.Json;
+@using System.Text;
+@inject HttpClient _http;
+
+<MudText Color="Color.Primary"
+         Typo="Typo.h3"
+         Align="Align.Center">
+    Answer Quiz
+</MudText>
+
+@if (question != null)
+{
+    <MudPaper>
+        <MudImage Src="@question?.Question?.MediaFilePath"
+                  Alt="@question?.Question?.QuestionPath"
+                  Fluid="true"
+                  Elevation="25"
+                  Class="rounded-lg" />
+    </MudPaper>
+    <MudCard>
+        <MudCardContent>
+            <MudText Typo="Typo.h5">@question?.Question?.Title</MudText>
+        </MudCardContent>
+    </MudCard>
+    <MudList>
+        @if (question?.Answers != null)
+        {
+            @foreach (var answer in question.Answers)
+            {
+                @if (question?.Answers?.Count <= 1)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField @bind-Value="@userInput"
+                                      Label="Answer"
+                                      Variant="Variant.Outlined">
+                        </MudTextField>
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem>
+                        <MudCheckBox @bind-Checked="@isCheckedDict[answer.Content]"
+                                     Color="Color.Primary">
+                            <MudText>@answer.Content</MudText>
+                        </MudCheckBox>
+                    </MudItem>
+                }
+            }
+        }
+    </MudList>
+    <MudButton EndIcon="@Icons.Material.Filled.Send"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               OnClick="() => CheckAnswer(question)"
+               Style="margin-bottom:30px; margin-left:15px">
+        Submit
+    </MudButton>
+}
+else
+{
+    <MudText>@errorMessage</MudText>
+}
+
+@code {
+    [Parameter]
+    public string? QuestionPath { get; set; }
+
+    private List<AnswersQuestionResponseDto>? questions;
+    private AnswersQuestionResponseDto? question;
+    private string? errorMessage = "No questions here";
+    private Dictionary<string, bool> isCheckedDict { get; set; } = new Dictionary<string, bool>();
+    private string? userInput;
+    private bool isScored = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchQuestions();
+        question = await GetQuestionFromPath();
+        InitializeCheckedDict();
+
+    }
+
+    private void InitializeCheckedDict()
+    {
+        isCheckedDict = questions?.SelectMany(q => q.Answers)
+                                  .ToDictionary(answer => answer.Content, _ => false)
+                      ?? new Dictionary<string, bool>();
+    }
+
+    private async Task<AnswersQuestionResponseDto?> GetQuestionFromPath()
+    {
+        if (questions == null || string.IsNullOrEmpty(QuestionPath))
+        {
+            throw new Exception(errorMessage);
+        }
+        return questions.Find(question =>
+        question?.Question != null && question.Question.QuestionPath == QuestionPath);
+    }
+
+    private async Task CheckAnswer(AnswersQuestionResponseDto? question)
+    {
+        if (!string.IsNullOrEmpty(userInput))
+        {
+            var matchingAnswer = question?.Answers?.FirstOrDefault(a => a.Content.Equals(userInput, StringComparison.OrdinalIgnoreCase));
+
+            if (matchingAnswer != null && matchingAnswer.IsCorrect)
+            {
+                isCheckedDict[matchingAnswer.Content] = true;
+                isScored = true;
+            }
+        }
+        else
+        {
+            var selectedAnswers = question?.Answers?.Where(a => isCheckedDict.ContainsKey(a.Content) && isCheckedDict[a.Content]);
+
+            if (selectedAnswers != null && selectedAnswers.Any())
+            {
+                var incorrectAnswer = selectedAnswers.FirstOrDefault(a => !a.IsCorrect);
+                if (incorrectAnswer == null)
+                {
+                    isScored = true;
+                }
+            }
+        }
+        string? questionPath = question?.Question?.QuestionPath;
+        await UploadQuizItem(questionPath);
+    }
+
+    private async Task FetchQuestions()
+    {
+        var response = await _http.GetAsync("/api/Questions");
+
+        if (response.IsSuccessStatusCode)
+        {
+            questions = await response.Content.ReadFromJsonAsync<List<AnswersQuestionResponseDto>>();
+
+            if (questions == null)
+            {
+                errorMessage = "There was an error deserializing the response!";
+                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+            }
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+
+    private async Task UploadQuizItem(string? questionPath)
+    {
+        QuizItemQuestionResquestDto quizItemQuestionResquestDto = new QuizItemQuestionResquestDto
+            {
+                QuestionPath = questionPath,
+
+                QuizItem = new QuizItemRequestDto
+                {
+                    IsScored = isScored,
+
+                    //TODO: Calculate TimeSpent
+                    TimeSpent = 0,
+                    Started_At = DateTime.Now
+                }
+            };
+
+        var response = await _http.PostAsJsonAsync("api/QuizItems/upload", quizItemQuestionResquestDto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var quizItemResponseDto = await response.Content.ReadFromJsonAsync<QuizItemResponseDto>();
+
+            if (quizItemResponseDto == null)
+            {
+                errorMessage = response.ReasonPhrase;
+                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+            }
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+}

@@ -62,9 +62,6 @@
     private string? errorMessage;
     private MediaFileResponseDto? mediaResponse = new();
 
-    [Parameter]
-    public string? storedFileName { get; set; }
-
     private async Task OpenFile(InputFileChangeEventArgs e)
     {
         selectedFile = e.File;

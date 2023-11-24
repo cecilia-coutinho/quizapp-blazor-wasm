@@ -4,7 +4,11 @@
 @using MudBlazor;
 @using System.Text.Json;
 @using System.Text;
+@using Microsoft.Extensions.Logging
+@implements IDisposable
+@inject ILogger<PlayQuiz> Logger
 @inject HttpClient _http;
+@inject NavigationManager Navigation
 
 <PageTitle>Play Quiz</PageTitle>
 
@@ -18,67 +22,29 @@
 {
     @foreach (var question in questions)
     {
-        <MudExpansionPanels MultiExpansion="true" Dense="true" DisableGutters="true" Class="mt-6">
-            <MudExpansionPanel>
-                <TitleContent>
-                    <div class="d-flex flex-row" style="padding:15px 0;">
-                        <MudText Style="font-size:1.5rem">@question?.Question?.Title</MudText>
-                        <MudIcon Icon="@Icons.Material.Filled.QuestionMark" class="mr-3" Style="margin-top:5px"></MudIcon>
+        <MudList Style="padding:0px 0px 0px 15px">
+            <MudItem xs="12" sm="12">
+                <MudField>
+                    <div class="d-flex" style="padding:15px 0;">
+                        <MudText Style="font-size:1.2rem">@question?.Question?.Title
+                            <MudButton EndIcon="@Icons.Material.Filled.Send"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Style="margin-left:5px"
+                                       Class="flex-initial d-flex mud-theme-primary" Elevation="0"
+                                       OnClick="() => NavigateToQuizComponent(question.Question.QuestionPath)">
+                                Answer
+                            </MudButton>
+                        </MudText>
                     </div>
-                </TitleContent>
-                <ChildContent>
-                    <MudImage Src="@question?.Question?.MediaFilePath"
-                              Alt="@question?.Question?.QuestionPath"
-                              Fluid="true"
-                              Elevation="25"
-                              Class="rounded-lg" />
-                    <MudList>
-                        @if (question?.Answers != null)
-                        {
-                            @foreach (var answer in question.Answers)
-                            {
-                                @if (question?.Answers?.Count <= 1)
-                                {
-                                    <MudItem xs="12" sm="6" md="4">
-                                        <MudTextField @bind-Value="@userInput"
-                                                      Label="Answer"
-                                                      Variant="Variant.Outlined">
-                                        </MudTextField>
-                                    </MudItem>
-                                }
-                                else
-                                {
-                                    <MudItem>
-                                        <MudCheckBox @bind-Checked="@isCheckedDict[answer.Content]"
-                                                     Color="Color.Primary">
-                                            <MudText>@answer.Content</MudText>
-                                        </MudCheckBox>
-                                    </MudItem>
-                                }
-                            }
-                        }
-                    </MudList>
-                    <MudButton EndIcon="@Icons.Material.Filled.Send"
-                               Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               OnClick="() => CheckAnswer(question)"
-                               Style="margin-bottom:30px; margin-left:15px">
-                        Submit
-                    </MudButton>
-                    <MudButton EndIcon="@Icons.Material.Filled.Send"
-                               Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               Style="margin-bottom:30px; margin-left:15px">
-                        CopyLink To Share
-                    </MudButton>
-                </ChildContent>
-            </MudExpansionPanel>
-        </MudExpansionPanels>
+                </MudField>           
+            </MudItem>
+        </MudList>
     }
 }
 else
 {
-    <MudExpansionPanel>@errorMessage</MudExpansionPanel>
+    <MudText>@errorMessage</MudText>
 }
 
 @code {
@@ -91,77 +57,12 @@ else
     protected override async Task OnInitializedAsync()
     {
         await FetchQuestions();
-        InitializeCheckedDict();
+        Navigation.LocationChanged += HandleLocationChanged;
     }
 
-    private void InitializeCheckedDict()
+    private void NavigateToQuizComponent(string questionPath)
     {
-        isCheckedDict = questions?.SelectMany(q => q.Answers)
-                                  .ToDictionary(answer => answer.Content, _ => false)
-                      ?? new Dictionary<string, bool>();
-    }
-
-    private async Task CheckAnswer(AnswersQuestionResponseDto? question)
-    {
-        if (!string.IsNullOrEmpty(userInput))
-        {
-            var matchingAnswer = question?.Answers?.FirstOrDefault(a => a.Content.Equals(userInput, StringComparison.OrdinalIgnoreCase));
-
-            if (matchingAnswer != null && matchingAnswer.IsCorrect)
-            {
-                isCheckedDict[matchingAnswer.Content] = true;
-                isScored = true;
-            }
-        }
-        else
-        {
-            var selectedAnswers = question?.Answers?.Where(a => isCheckedDict.ContainsKey(a.Content) && isCheckedDict[a.Content]);
-
-            if (selectedAnswers != null && selectedAnswers.Any())
-            {
-                var incorrectAnswer = selectedAnswers.FirstOrDefault(a => !a.IsCorrect);
-                if (incorrectAnswer == null)
-                {
-                    isScored = true;
-                }
-            }
-        }
-        string? questionPath = question?.Question?.QuestionPath;
-        await UploadQuizItem(questionPath);
-    }
-
-    private async Task UploadQuizItem(string? questionPath)
-    {
-        QuizItemQuestionResquestDto quizItemQuestionResquestDto = new QuizItemQuestionResquestDto
-            {
-                QuestionPath = questionPath,
-
-                QuizItem = new QuizItemRequestDto
-                {
-                    IsScored = isScored,
-                    TimeSpent = 0,
-                    Started_At = DateTime.Now
-                }
-            };
-
-        var response = await _http.PostAsJsonAsync("api/QuizItems/upload", quizItemQuestionResquestDto);
-
-        if (response.IsSuccessStatusCode)
-        {
-            var quizItemResponseDto = await response.Content.ReadFromJsonAsync<QuizItemResponseDto>();
-
-            if (quizItemResponseDto == null)
-            {
-                errorMessage = response.ReasonPhrase;
-                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
-            }
-        }
-        else
-        {
-            errorMessage = response.ReasonPhrase;
-            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
-        }
-        //api/QuizItems/upload
+        Navigation.NavigateTo($"playquiz/{questionPath}");
     }
 
     private async Task FetchQuestions()
@@ -183,5 +84,15 @@ else
             errorMessage = response.ReasonPhrase;
             throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
         }
+    }
+
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        Logger.LogInformation("URL of new location: {Location}", e.Location);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= HandleLocationChanged;
     }
 }

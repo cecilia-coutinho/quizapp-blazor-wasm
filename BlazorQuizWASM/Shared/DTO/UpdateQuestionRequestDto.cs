@@ -8,6 +8,6 @@ namespace BlazorQuizWASM.Shared.DTO
 {
     public class UpdateQuestionRequestDto
     {
-        public string? Title { get; set; }
+        public string? QuestionPath { get; set; }
     }
 }

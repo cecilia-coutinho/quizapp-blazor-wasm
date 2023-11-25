@@ -5,6 +5,7 @@
 @using System.Text.Json;
 @using System.Text;
 @inject HttpClient _http;
+@inject NavigationManager Navigation;
 
 <MudText Color="Color.Primary"
          Typo="Typo.h3"
@@ -59,6 +60,29 @@
                Style="margin-bottom:30px; margin-left:15px">
         Submit
     </MudButton>
+
+    @if (question?.Question?.TimeLimit >= 1)
+    {
+        @if (timeRemainingSpan.TotalSeconds > 0)
+        {
+            <MudText Typo="Typo.h6" Style="margin-left:15px">
+                Time Remaining: @timeRemainingSpan.Minutes:@timeRemainingSpan.Seconds
+            </MudText>
+        }
+        else
+        {
+            timeUpDialog?.Show();
+            <MudDialog @ref="timeUpDialog" Title="Time's Up!" DisableBackdropClick="true" Position="DialogPosition.Center"
+                       CloseOnEscapeKey="false">
+                <DialogContent>
+                    <MudText>The time limit has been reached. You lost!</MudText>
+                </DialogContent>
+                <DialogActions>
+                    <MudButton OnClick="@GoPlayQuiz" Color="Color.Primary">Go to Play Quiz</MudButton>
+                </DialogActions>
+            </MudDialog>
+        }
+    }
 }
 else
 {
@@ -75,12 +99,18 @@ else
     private Dictionary<string, bool> isCheckedDict { get; set; } = new Dictionary<string, bool>();
     private string? userInput;
     private bool isScored = false;
+    private DateTime startedAt;
+    private MudDialog? timeUpDialog;
+    TimeSpan timeRemainingSpan = new TimeSpan();
+    TimeSpan timeSpent;
 
     protected override async Task OnInitializedAsync()
     {
         await FetchQuestions();
         question = await GetQuestionFromPath();
         InitializeCheckedDict();
+        startedAt = DateTime.Now;
+        QuizTimer();
 
     }
 
@@ -130,6 +160,34 @@ else
         await UploadQuizItem(questionPath);
     }
 
+    private void QuizTimer()
+    {
+        if (question != null && question.Question != null)
+        {
+            var timer = new System.Timers.Timer(1000);
+            timer.Elapsed += async (sender, e) => await UpdateTimeRemaining();
+            timer.AutoReset = true;
+            timer.Start();
+        }
+    }
+
+    private async Task UpdateTimeRemaining()
+    {
+        if (question != null && question.Question != null)
+        {
+            int timeLimit = question.Question.TimeLimit;
+            timeRemainingSpan = startedAt.Add(TimeSpan.FromMinutes(timeLimit)) - DateTime.Now;
+            if (timeRemainingSpan.TotalSeconds <= 0)
+            {
+                isScored = false;
+                timeSpent = startedAt - DateTime.Now;
+                string? questionPath = question?.Question?.QuestionPath;
+                await UploadQuizItem(questionPath);
+            }
+            StateHasChanged();
+        }
+    }
+
     private async Task FetchQuestions()
     {
         var response = await _http.GetAsync("/api/Questions");
@@ -153,6 +211,11 @@ else
 
     private async Task UploadQuizItem(string? questionPath)
     {
+        if (question == null || question.Question == null || string.IsNullOrEmpty(questionPath))
+        {
+            throw new Exception(errorMessage);
+        }
+
         QuizItemQuestionResquestDto quizItemQuestionResquestDto = new QuizItemQuestionResquestDto
             {
                 QuestionPath = questionPath,
@@ -160,10 +223,8 @@ else
                 QuizItem = new QuizItemRequestDto
                 {
                     IsScored = isScored,
-
-                    //TODO: Calculate TimeSpent
-                    TimeSpent = 0,
-                    Started_At = DateTime.Now
+                    TimeSpent = (int)timeSpent.Minutes,
+                    Started_At = startedAt
                 }
             };
 
@@ -184,5 +245,10 @@ else
             errorMessage = response.ReasonPhrase;
             throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
         }
+    }
+
+    private void GoPlayQuiz()
+    {
+        Navigation.NavigateTo($"playquiz");
     }
 }

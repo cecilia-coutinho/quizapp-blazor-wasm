@@ -156,8 +156,7 @@ else
                 }
             }
         }
-        string? questionPath = question?.Question?.QuestionPath;
-        await UploadQuizItem(questionPath);
+        await UploadQuizItem();
     }
 
     private void QuizTimer()
@@ -173,16 +172,18 @@ else
 
     private async Task UpdateTimeRemaining()
     {
+        bool quizItemUploaded = false;
         if (question != null && question.Question != null)
         {
             int timeLimit = question.Question.TimeLimit;
             timeRemainingSpan = startedAt.Add(TimeSpan.FromMinutes(timeLimit)) - DateTime.Now;
-            if (timeRemainingSpan.TotalSeconds <= 0)
+            if (timeRemainingSpan.TotalSeconds <= 0 && !quizItemUploaded)
             {
                 isScored = false;
                 timeSpent = startedAt - DateTime.Now;
                 string? questionPath = question?.Question?.QuestionPath;
-                await UploadQuizItem(questionPath);
+                await UploadQuizItem();
+                quizItemUploaded = true;
             }
             StateHasChanged();
         }
@@ -209,21 +210,21 @@ else
         }
     }
 
-    private async Task UploadQuizItem(string? questionPath)
+    private async Task UploadQuizItem()
     {
-        if (question == null || question.Question == null || string.IsNullOrEmpty(questionPath))
+        if (question == null || question.Question == null)
         {
             throw new Exception(errorMessage);
         }
 
         QuizItemQuestionResquestDto quizItemQuestionResquestDto = new QuizItemQuestionResquestDto
             {
-                QuestionPath = questionPath,
+                QuestionPath = question.Question.QuestionPath,
 
                 QuizItem = new QuizItemRequestDto
                 {
                     IsScored = isScored,
-                    TimeSpent = (int)timeSpent.Minutes,
+                    TimeSpent = (int)timeSpent.TotalMinutes,
                     Started_At = startedAt
                 }
             };
@@ -236,16 +237,17 @@ else
 
             if (quizItemResponseDto == null)
             {
-                errorMessage = response.ReasonPhrase;
-                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+                errorMessage = "Response Quiz.razor deserialization error";
+                throw new Exception(errorMessage);
             }
         }
         else
         {
             errorMessage = response.ReasonPhrase;
-            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content.ReadAsStringAsync()},  \nresponse Headers {response.Headers}");
         }
     }
+
 
     private void GoPlayQuiz()
     {

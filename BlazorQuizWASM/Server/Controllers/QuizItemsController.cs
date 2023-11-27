@@ -80,7 +80,7 @@ namespace BlazorQuizWASM.Server.Controllers
         [Route("upload")]
         [ValidateModel]
         [Authorize]
-        public async Task<ActionResult<QuizItem>> Upload([FromForm] QuizItemQuestionResquestDto request)
+        public async Task<ActionResult> Upload([FromBody] QuizItemQuestionResquestDto request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

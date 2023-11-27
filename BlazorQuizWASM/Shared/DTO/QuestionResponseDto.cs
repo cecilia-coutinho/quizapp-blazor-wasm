@@ -13,6 +13,7 @@ namespace BlazorQuizWASM.Shared.DTO
     {
         public string? MediaFileName { get; set; }
         public string? MediaFilePath { get; set; }
+        public string? FileExtension { get; set; }
         public string? Title { get; set; }
         public string? QuestionPath { get; set; }
         public int TimeLimit { get; set; }

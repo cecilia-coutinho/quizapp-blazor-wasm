@@ -77,7 +77,8 @@ namespace BlazorQuizWASM.Server.Repositories
                 .Select(m => new MediaFile
                 {
                     MediaFileName = m.MediaFileName,
-                    FilePath = m.FilePath
+                    FilePath = m.FilePath,
+                    FileExtension = m.FileExtension
                 }).FirstOrDefaultAsync();
 
             if (media == null)

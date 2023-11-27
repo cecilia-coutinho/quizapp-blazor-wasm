@@ -71,6 +71,7 @@ namespace BlazorQuizWASM.Server.Controllers
                         Title = question.Title,
                         QuestionPath = question.QuestionPath,
                         MediaFileName = media?.MediaFileName,
+                        FileExtension = media?.FileExtension,
                         MediaFilePath = media?.FilePath,
                         TimeLimit = question.TimeLimit,
                         IsPublished = question.IsPublished

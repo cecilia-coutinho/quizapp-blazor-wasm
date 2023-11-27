@@ -4,6 +4,7 @@
 @using MudBlazor;
 @using System.Text.Json;
 @using System.Text;
+@using Blazored.Video;
 @inject HttpClient _http;
 @inject NavigationManager Navigation;
 
@@ -16,11 +17,25 @@
 @if (question != null)
 {
     <MudPaper>
-        <MudImage Src="@question?.Question?.MediaFilePath"
-                  Alt="@question?.Question?.QuestionPath"
-                  Fluid="true"
-                  Elevation="25"
-                  Class="rounded-lg" />
+        @if (IsVideoExtension(question?.Question?.FileExtension))
+        {
+            <BlazoredVideo loop="loop"
+                           Autoplay="autoplay"
+                           class="w-100"
+                           style="max-width:800px;"
+                           controls="controls">
+                <source src="@question?.Question?.MediaFilePath" type="video/mp4" />
+            </BlazoredVideo>
+
+        }
+        else
+        {
+            <MudImage Src="@question?.Question?.MediaFilePath"
+                      Alt="@question?.Question?.QuestionPath"
+                      Fluid="true"
+                      Elevation="25"
+                      Class="rounded-lg" />
+        }
     </MudPaper>
     <MudCard>
         <MudCardContent>
@@ -245,5 +260,16 @@ else
     private void GoPlayQuiz()
     {
         Navigation.NavigateTo($"playquiz");
+    }
+
+    private bool IsVideoExtension(string? fileExtension)
+    {
+        if (string.IsNullOrEmpty(fileExtension))
+        {
+            return false;
+        }
+        string[] allowedVideoExtensions = new string[] { ".mp4", ".webm", ".x-m4v" };
+
+        return allowedVideoExtensions.Contains(fileExtension);
     }
 }

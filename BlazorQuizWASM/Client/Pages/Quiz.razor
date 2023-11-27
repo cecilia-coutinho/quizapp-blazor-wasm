@@ -177,13 +177,13 @@ else
         {
             int timeLimit = question.Question.TimeLimit;
             timeRemainingSpan = startedAt.Add(TimeSpan.FromMinutes(timeLimit)) - DateTime.Now;
-            if (timeRemainingSpan.TotalSeconds <= 0 && !quizItemUploaded)
+            if (timeRemainingSpan.TotalSeconds == 0 && !quizItemUploaded)
             {
                 isScored = false;
                 timeSpent = startedAt - DateTime.Now;
                 string? questionPath = question?.Question?.QuestionPath;
-                await UploadQuizItem();
                 quizItemUploaded = true;
+                await UploadQuizItem();
             }
             StateHasChanged();
         }
@@ -233,13 +233,7 @@ else
 
         if (response.IsSuccessStatusCode)
         {
-            var quizItemResponseDto = await response.Content.ReadFromJsonAsync<QuizItemResponseDto>();
-
-            if (quizItemResponseDto == null)
-            {
-                errorMessage = "Response Quiz.razor deserialization error";
-                throw new Exception(errorMessage);
-            }
+            GoPlayQuiz();
         }
         else
         {
@@ -247,7 +241,6 @@ else
             throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content.ReadAsStringAsync()},  \nresponse Headers {response.Headers}");
         }
     }
-
 
     private void GoPlayQuiz()
     {

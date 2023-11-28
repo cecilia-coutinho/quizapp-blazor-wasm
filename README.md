@@ -69,16 +69,15 @@ On the server-side, tasks include managing user accounts, transferring SQL data,
 
 The logic is structured around four main controllers: MediaFiles, Questions, Answers and Quiz Items. There is also a Repository folder that handles the database context and the implementation of repository pattern.
 
-![Code Structure 1](/BlazorQuizWASM.Client/wwwroot/images/code-structure_server-side.PNG)
+![Code Structure 1](/BlazorQuizWASM/Client/wwwroot/images/code-structure_server-side.PNG)
 
 The client-side manages the creation of an interactive and dynamic user interface while initiating requests to the server-side.
 
-![Code Structure 2](/BlazorQuizWASM.Client/wwwroot/images/code-structure_client-side.PNG)
+![Code Structure 2](/BlazorQuizWASM/Client/wwwroot/images/code-structure_client-side.PNG)
 
 Additionally, there is a shared library used by both server and client sides. These components manage functionalities such as data transfer (DTO), services for API requests, and state management.
 
-![Code Structure 3](/BlazorQuizWASM.Client/wwwroot/images/code-structure_shared.PNG)
-
+![Code Structure 3](/BlazorQuizWASM/Client/wwwroot/images/code-structure_shared.PNG)
 
 #### Seed Data
 

@@ -7,39 +7,32 @@
 
 <PageTitle>Answered Quizzes</PageTitle>
 
-<h1>Answered Quizzes</h1>
+<MudText Color="Color.Primary"
+         Typo="Typo.h3"
+         Align="Align.Center">
+    Answered Quizzes
+</MudText>
 
-@if (quizItems == null)
-{
-    <p><em>@errorMessage</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Question</th>
-                <th>Participant</th>
-                <th>Time Spent in Minutes</th>
-                <th>Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var quizItem in quizItems)
-            {
-                <tr>
-                    <td>@quizItem.QuestionTitle</td>
-                    <td>@quizItem?.QuizItem?.Nickname</td>
-                    <td>@quizItem?.QuizItem?.TimeSpent</td>
-                    <td>@(quizItem?.QuizItem?.IsScored == true ? 1 : 0)</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="ma-5 d-flex justify-center">
+    <MudTable Items="@quizItems">
+        <HeaderContent>
+            <MudTh>Question</MudTh>
+            <MudTh>Participant</MudTh>
+            <MudTh>Time Spent in Minutes</MudTh>
+            <MudTh>Score</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Question">@context.QuestionTitle</MudTd>
+            <MudTd DataLabel="Participant">@context?.QuizItem?.Nickname</MudTd>
+            <MudTd DataLabel="Time Spent in Minutes">@context?.QuizItem?.TimeSpent</MudTd>
+            <MudTd DataLabel="Score">@((context?.QuizItem?.IsScored == true ? 1 : 0))</MudTd>
+            </RowTemplate>
 
-}
+        </MudTable>
+    </div>
 
-@code {
+
+    @code {
     private List<QuizItemQuestionResponseDto>? quizItems;
     private string? errorMessage = "No questions/items here";
 

@@ -9,10 +9,6 @@
                 <MudIcon Icon="@Icons.Material.Filled.List" /> Play Quiz
             </MudNavLink>
 
-            <MudNavLink Href="/answeredquizzes" Match="NavLinkMatch.Prefix">
-                <MudIcon Icon="@Icons.Material.Filled.List" /> QuizBoard
-            </MudNavLink>
-
             <MudNavGroup Title="Quiz Manager" Expanded="true">
                 <MudNavLink Href="/createquiz" Match="NavLinkMatch.Prefix">
                     <MudIcon Icon="@Icons.Material.Filled.Create" /> Create Quiz
@@ -22,6 +18,9 @@
                     <MudIcon Icon="@Icons.Material.Filled.Quiz" /> My Quizzes
                 </MudNavLink>
 
+                <MudNavLink Href="/quizparticipants" Match="NavLinkMatch.Prefix">
+                    <MudIcon Icon="@Icons.Material.Filled.List" /> QuizBoard
+                </MudNavLink>
             </MudNavGroup>
         </Authorized>
     </AuthorizeView>

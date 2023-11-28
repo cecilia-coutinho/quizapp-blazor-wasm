@@ -1,0 +1,64 @@
+﻿@page "/quizparticipants"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using BlazorQuizWASM.Shared.DTO
+@attribute [Authorize]
+@inject HttpClient Http
+
+<PageTitle>Answered Quizzes</PageTitle>
+
+<h1>Answered Quizzes</h1>
+
+@if (quizItems == null)
+{
+    <p><em>@errorMessage</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Question</th>
+                <th>Participant</th>
+                <th>Time Spent in Minutes</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var quizItem in quizItems)
+            {
+                <tr>
+                    <td>@quizItem.QuestionTitle</td>
+                    <td>@quizItem?.QuizItem?.Nickname</td>
+                    <td>@quizItem?.QuizItem?.TimeSpent</td>
+                    <td>@(quizItem?.QuizItem?.IsScored == true ? 1 : 0)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+@code {
+    private List<QuizItemQuestionResponseDto>? quizItems;
+    private string? errorMessage = "No questions/items here";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchParticipants();
+    }
+
+    private async Task FetchParticipants()
+    {
+        var response = await Http.GetAsync($"api/QuizItems");
+
+        if (response.IsSuccessStatusCode)
+        {
+            quizItems = await response.Content.ReadFromJsonAsync<List<QuizItemQuestionResponseDto>>();
+        }
+        else
+        {
+            throw new Exception($"There was an error in the response! {response.ReasonPhrase}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}");
+        }
+    }
+}

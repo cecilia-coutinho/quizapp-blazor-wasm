@@ -25,11 +25,52 @@ namespace BlazorQuizWASM.Server.Controllers
             _userManager = userManager;
         }
 
+        // GET: api/QuizItems
+        [HttpGet]
+        [Authorize]
+        public async Task<ActionResult> GetParticipantsPerQuestion()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Problem(detail: "Could not fetch user", statusCode: 500);
+            }
+
+            var quizItem = await _quizItemRepository.GetAllAsyncPerQuizCreator(userId);
+            var quizItemResponseList = new List<QuizItemQuestionResponseDto>();
+
+            foreach (var item in quizItem)
+            {
+                if (item.QuizItem == null)
+                {
+                    return NotFound("This question does not have any participants.");
+                }
+
+                var quizItemQuestionResponseDto = new QuizItemQuestionResponseDto
+                {
+                    QuizItem = new QuizItemResponseDto
+                    {
+                        Nickname = item.QuizItem.Nickname,
+                        IsScored = item.QuizItem.IsScored,
+                        TimeSpent = item.QuizItem.TimeSpent,
+                        Started_At = item.QuizItem.Started_At
+                    },
+                    QuestionPath = item.QuestionPath,
+                    QuestionTitle = item.QuestionTitle
+                };
+
+                quizItemResponseList.Add(quizItemQuestionResponseDto);
+            }
+
+            return Ok(quizItemResponseList);
+        }
+
         // GET: api/QuizItems/score
         [HttpGet]
         [Route("score")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<QuizItem>>> GetScore()
+        public async Task<ActionResult> GetScore()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -55,25 +96,25 @@ namespace BlazorQuizWASM.Server.Controllers
         }
 
         // GET: api/QuizItems/participants
-        [HttpGet]
-        [Route("participants/{questionPath}")]
-        [Authorize]
-        public async Task<ActionResult<QuizItem>> GetParticipantsPerQuestion(string questionPath)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //[HttpGet]
+        //[Route("participants/{questionPath}")]
+        //[Authorize]
+        //public async Task<ActionResult> GetParticipantsPerQuestion(string questionPath)
+        //{
+        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            // Get Question Id
-            var question = await _questionRepository.GetQuestionByPath(questionPath);
+        //    // Get Question Id
+        //    var question = await _questionRepository.GetQuestionByPath(questionPath);
 
-            if (question == null)
-            {
-                return NotFound("This question does not exist. Please check your input data and try again.");
-            }
+        //    if (question == null)
+        //    {
+        //        return NotFound("This question does not exist. Please check your input data and try again.");
+        //    }
 
-            var quizItem = await _quizItemRepository.GetParticipantsPerQuestionAsync(question.QuestionId);
+        //    var quizItem = await _quizItemRepository.GetParticipantsPerQuestionAsync(question.QuestionId);
 
-            return Ok(quizItem);
-        }
+        //    return Ok(quizItem);
+        //}
 
         // POST: api/QuizItems/upload
         [HttpPost]

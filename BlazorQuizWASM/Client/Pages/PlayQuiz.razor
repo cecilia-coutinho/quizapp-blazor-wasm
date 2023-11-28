@@ -18,6 +18,12 @@
     Play Quiz
 </MudText>
 
+<MudText Color="Color.Primary"
+         Typo="Typo.h6"
+         Align="Align.Center">
+    Your Score: @score
+</MudText>
+
 @if (questions != null)
 {
     @foreach (var question in questions)
@@ -53,10 +59,12 @@ else
     private Dictionary<string, bool> isCheckedDict { get; set; } = new Dictionary<string, bool>();
     private string? userInput;
     private bool isScored = false;
+    private int score = 0;
 
     protected override async Task OnInitializedAsync()
     {
         await FetchQuestions();
+        await FetchUserScore();
         Navigation.LocationChanged += HandleLocationChanged;
     }
 
@@ -78,6 +86,21 @@ else
                 errorMessage = "There was an error deserializing the response!";
                 throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
             }
+        }
+        else
+        {
+            errorMessage = response.ReasonPhrase;
+            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+        }
+    }
+
+    private async Task FetchUserScore()
+    {
+        var response = await _http.GetAsync("/api/QuizItems/score");
+
+        if (response.IsSuccessStatusCode)
+        {
+            score = await response.Content.ReadFromJsonAsync<int>();
         }
         else
         {

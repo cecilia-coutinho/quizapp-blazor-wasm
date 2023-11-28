@@ -8,5 +8,6 @@ namespace BlazorQuizWASM.Server.Repositories
         Task<QuizItem> CreateAsync(QuizItem quizItem);
         Task<List<QuizItemResponseDto>> GetParticipantsPerQuestionAsync(Guid fkQuestionId);
         Task<List<QuizItem>> GetScore(string fkUserId);
+        Task<List<QuizItemQuestionResponseDto>> GetAllAsyncPerQuizCreator(string userId);
     }
 }

@@ -273,39 +273,39 @@ namespace BlazorQuizWASM.Server.Controllers
 
         //// GET questions
         //// GET: api/Questions/questions-by-user
-        //[HttpGet]
-        //[Route("questions-by-user")]
-        //public async Task<ActionResult> GetAllByUser(
-        //    [FromQuery] string? filterOn,
-        //    [FromQuery] string? filterQuery,
-        //    [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
-        //    [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
-        //    )
-        //{
+        [HttpGet]
+        [Route("questions-by-user")]
+        public async Task<ActionResult> GetAllByUser(
+            [FromQuery] string? filterOn,
+            [FromQuery] string? filterQuery,
+            [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
+            )
+        {
 
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        //    var questionDomainModel = await _questionRepository
-        //        .GetAllAsync(
-        //        filterOn,
-        //        filterQuery,
-        //        sortBy,
-        //        isAscending ?? true,
-        //        pageNumber,
-        //        pageSize);
+            var questionDomainModel = await _questionRepository
+                .GetAllAsync(
+                filterOn,
+                filterQuery,
+                sortBy,
+                isAscending ?? true,
+                pageNumber,
+                pageSize);
 
-        //    var questions = questionDomainModel
-        //    .Where(q => q.FkUserId == userId)
-        //    .Select(q => new
-        //    {
-        //        Title = q.Title,
-        //        IsPublished = q.IsPublished,
-        //        QuestionPath = q.QuestionPath
-        //    })
-        //    .ToList();
+            var questions = questionDomainModel
+            .Where(q => q.FkUserId == userId)
+            .Select(q => new
+            {
+                Title = q.Title,
+                IsPublished = q.IsPublished,
+                QuestionPath = q.QuestionPath
+            })
+            .ToList();
 
-        //    return Ok(new { Question = questions });
-        //}
+            return Ok(new { Question = questions });
+        }
 
 
 

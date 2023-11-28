@@ -57,8 +57,7 @@ Optional Features:
 
 The SQL design follows a relational database model, with tables representing entities such as Users, Media Type, Media File, Question, Answer, and Quiz Item. These tables handle tasks such as user authentication, media uploads, question creation, storing answers, and keeping track of participants' scores for quizzes. Relationships are established using foreign keys to maintain data integrity.
 
-[IMAGE ER MODEL]
-![ER Model](/BlazorQuizWASM.Client/wwwroot/images/image.jpg)
+![ER Model](/BlazorQuizWASM/Client/wwwroot/images/er-model.PNG)
 
 
 ### Code Structure

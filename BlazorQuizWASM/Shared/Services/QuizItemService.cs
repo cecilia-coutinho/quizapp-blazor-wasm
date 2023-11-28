@@ -20,6 +20,7 @@ namespace BlazorQuizWASM.Shared.Services
             if (response.IsSuccessStatusCode)
             {
                 quizItems = await response.Content.ReadFromJsonAsync<List<QuizItemQuestionResponseDto>>();
+
                 if (quizItems == null)
                 {
                     throw new Exception("There was an error fetching the quizItems or the quizItems were null");

@@ -3,9 +3,8 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using BlazorQuizWASM.Shared.DTO
 @using BlazorQuizWASM.Shared.Services
-@attribute [Authorize]
-@inject HttpClient Http
 @inject QuizItemService QuizItemService
+
 <PageTitle>Answered Quizzes</PageTitle>
 
 <MudText Color="Color.Primary"
@@ -35,7 +34,6 @@
 
     @code {
     private List<QuizItemQuestionResponseDto>? quizItems;
-    private string? errorMessage = "No questions/items here";
 
     protected override async Task OnInitializedAsync()
     {

@@ -148,28 +148,28 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // GET questions by path
         // GET: api/Questions/question/{questionPath}
-        [HttpGet("question/{questionPath}")]
-        public async Task<ActionResult> GetQuestionWithAnswers(string questionPath)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //[HttpGet("question/{questionPath}")]
+        //public async Task<ActionResult> GetQuestionWithAnswers(string questionPath)
+        //{
+        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionPath, userId);
-            var questionId = question.QuestionId;
+        //    var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionPath, userId);
+        //    var questionId = question.QuestionId;
 
-            var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
-            var response = answers.Select(a => new { a.Content, a.IsCorrect });
+        //    var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
+        //    var response = answers.Select(a => new { a.Content, a.IsCorrect });
 
-            var questionDomainModel = await _questionRepository.GetByIdAsync(questionId);
+        //    var questionDomainModel = await _questionRepository.GetByIdAsync(questionId);
 
-            if (questionDomainModel == null)
-            {
-                return NotFound();
-            }
+        //    if (questionDomainModel == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            var questionTitle = questionDomainModel.Title;
+        //    var questionTitle = questionDomainModel.Title;
 
-            return Ok(new { Question = questionTitle });
-        }
+        //    return Ok(new { Question = questionTitle });
+        //}
 
         // CREATE Question
         // POST: api/Questions/upload
@@ -273,39 +273,39 @@ namespace BlazorQuizWASM.Server.Controllers
 
         //// GET questions
         //// GET: api/Questions/questions-by-user
-        [HttpGet]
-        [Route("questions-by-user")]
-        public async Task<ActionResult> GetAllByUser(
-            [FromQuery] string? filterOn,
-            [FromQuery] string? filterQuery,
-            [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
-            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
-            )
-        {
+        //[HttpGet]
+        //[Route("questions-by-user")]
+        //public async Task<ActionResult> GetAllByUser(
+        //    [FromQuery] string? filterOn,
+        //    [FromQuery] string? filterQuery,
+        //    [FromQuery] string? sortBy, [FromQuery] bool? isAscending,
+        //    [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000
+        //    )
+        //{
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var questionDomainModel = await _questionRepository
-                .GetAllAsync(
-                filterOn,
-                filterQuery,
-                sortBy,
-                isAscending ?? true,
-                pageNumber,
-                pageSize);
+        //    var questionDomainModel = await _questionRepository
+        //        .GetAllAsync(
+        //        filterOn,
+        //        filterQuery,
+        //        sortBy,
+        //        isAscending ?? true,
+        //        pageNumber,
+        //        pageSize);
 
-            var questions = questionDomainModel
-            .Where(q => q.FkUserId == userId)
-            .Select(q => new
-            {
-                Title = q.Title,
-                IsPublished = q.IsPublished,
-                QuestionPath = q.QuestionPath
-            })
-            .ToList();
+        //    var questions = questionDomainModel
+        //    .Where(q => q.FkUserId == userId)
+        //    .Select(q => new
+        //    {
+        //        Title = q.Title,
+        //        IsPublished = q.IsPublished,
+        //        QuestionPath = q.QuestionPath
+        //    })
+        //    .ToList();
 
-            return Ok(new { Question = questions });
-        }
+        //    return Ok(new { Question = questions });
+        //}
 
 
 

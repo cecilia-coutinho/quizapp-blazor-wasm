@@ -80,18 +80,18 @@ namespace BlazorQuizWASM.Server.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Question?> GetByIdAsync(Guid id)
-        {
-            if (_context.Questions == null)
-            {
-                throw new Exception("Entity 'Questions' not found.");
-            }
+        //public async Task<Question?> GetByIdAsync(Guid id)
+        //{
+        //    if (_context.Questions == null)
+        //    {
+        //        throw new Exception("Entity 'Questions' not found.");
+        //    }
 
-            var question = await _context.Questions
-                .FirstOrDefaultAsync(x => x.QuestionId == id);
+        //    var question = await _context.Questions
+        //        .FirstOrDefaultAsync(x => x.QuestionId == id);
 
-            return question ?? throw new Exception("Question not found.");
-        }
+        //    return question ?? throw new Exception("Question not found.");
+        //}
 
         public async Task<Question> GetQuestionByPath(string questionPath)
         {

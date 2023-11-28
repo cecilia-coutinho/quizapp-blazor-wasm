@@ -12,6 +12,8 @@ namespace BlazorQuizWASM.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [ValidateModel]
     public class QuizItemsController : ControllerBase
     {
         private readonly IQuizItemRepository _quizItemRepository;
@@ -27,7 +29,6 @@ namespace BlazorQuizWASM.Server.Controllers
 
         // GET: api/QuizItems
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult> GetParticipantsPerQuestion()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -69,7 +70,6 @@ namespace BlazorQuizWASM.Server.Controllers
         // GET: api/QuizItems/score
         [HttpGet]
         [Route("score")]
-        [Authorize]
         public async Task<ActionResult> GetScore()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -91,8 +91,6 @@ namespace BlazorQuizWASM.Server.Controllers
         // POST: api/QuizItems/upload
         [HttpPost]
         [Route("upload")]
-        [ValidateModel]
-        [Authorize]
         public async Task<ActionResult> Upload([FromBody] QuizItemQuestionResquestDto request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

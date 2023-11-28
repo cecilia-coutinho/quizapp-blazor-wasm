@@ -1,17 +1,17 @@
 ﻿using BlazorQuizWASM.Server.CustomActionFilters;
-using BlazorQuizWASM.Server.Data;
 using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BlazorQuizWASM.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [ValidateModel]
     public class AnswersController : ControllerBase
     {
         private readonly IAnswerRepository _answerRepository;
@@ -26,9 +26,7 @@ namespace BlazorQuizWASM.Server.Controllers
         // CREATE Answers
         // POST: api/Answers/upload
         [HttpPost]
-        [Route("upload")]
-        [ValidateModel]
-        [Authorize]
+        [Route("upload")]      
         public async Task<ActionResult<IEnumerable<AnswerRequestDto>>> PostAnswer([FromBody] AnswersQuestionRequestDto answerRequestDto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

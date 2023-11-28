@@ -1,17 +1,18 @@
-﻿using BlazorQuizWASM.Server.Models.Domain;
+﻿using BlazorQuizWASM.Server.CustomActionFilters;
+using BlazorQuizWASM.Server.Models.Domain;
 using BlazorQuizWASM.Server.Repositories;
 using BlazorQuizWASM.Shared.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Net;
 
 namespace BlazorQuizWASM.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [ValidateModel]
     public class MediaFilesController : ControllerBase
     {
         private readonly IMediaFileRepository _mediaFileRepository;
@@ -26,7 +27,6 @@ namespace BlazorQuizWASM.Server.Controllers
         // POST: api/MediaFiles/Upload
         [HttpPost]
         [Route("Upload")]
-        [Authorize]
         public async Task<ActionResult> Upload([FromForm] MediaUploadRequestDto request)
         {
             if (request.File != null || request?.File?.Length > 0)
@@ -109,7 +109,7 @@ namespace BlazorQuizWASM.Server.Controllers
 
             if (media == null)
             {
-                ModelState.AddModelError("file","Unsupported media type");
+                ModelState.AddModelError("file", "Unsupported media type");
             }
             var mediaType = await _mediaTypeRepository.GetMediaType(media);
             return mediaType?.MediaId ?? Guid.Empty;

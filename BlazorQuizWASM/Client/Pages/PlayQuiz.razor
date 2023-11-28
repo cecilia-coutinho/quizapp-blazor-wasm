@@ -2,14 +2,12 @@
 @using BlazorQuizWASM.Shared.DTO;
 @using Microsoft.AspNetCore.Authorization;
 @using MudBlazor;
-@using System.Text.Json;
-@using System.Text;
 @using Microsoft.Extensions.Logging
 @using BlazorQuizWASM.Shared.Services;
 @inject QuestionService _questionService;
+@inject QuizItemService _quizItemService;
 @implements IDisposable
 @inject ILogger<PlayQuiz> Logger
-@inject HttpClient _http;
 @inject NavigationManager Navigation
 
 <PageTitle>Play Quiz</PageTitle>
@@ -66,28 +64,13 @@ else
     protected override async Task OnInitializedAsync()
     {
        questions = await _questionService.FetchQuestionsAsync();
-        await FetchUserScore();
+        score = await _quizItemService.FetchUserScoreAsync();
         Navigation.LocationChanged += HandleLocationChanged;
     }
 
     private void NavigateToQuizComponent(string questionPath)
     {
         Navigation.NavigateTo($"playquiz/{questionPath}");
-    }
-
-    private async Task FetchUserScore()
-    {
-        var response = await _http.GetAsync("/api/QuizItems/score");
-
-        if (response.IsSuccessStatusCode)
-        {
-            score = await response.Content.ReadFromJsonAsync<int>();
-        }
-        else
-        {
-            errorMessage = response.ReasonPhrase;
-            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
-        }
     }
 
     private void HandleLocationChanged(object sender, LocationChangedEventArgs e)

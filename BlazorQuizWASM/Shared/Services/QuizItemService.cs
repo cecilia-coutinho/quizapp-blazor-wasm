@@ -51,6 +51,22 @@ namespace BlazorQuizWASM.Shared.Services
             }
         }
 
+        public async Task<int> FetchUserScoreAsync()
+        {
+            var response = await _http.GetAsync("/api/QuizItems/score");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var score = await response.Content.ReadFromJsonAsync<int>();
+                return score;
+            }
+            else
+            {
+                errorMessage = response.ReasonPhrase;
+                throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
+            }
+        }
+
         private void GoPlayQuiz()
         {
             _navigation.NavigateTo($"playquiz");

@@ -26,6 +26,7 @@ namespace BlazorQuizWASM.Client
             builder.Services.AddSingleton<MediaStateContainer>();
             builder.Services.AddScoped<QuestionStateContainer>();
             builder.Services.AddScoped<QuizItemService>();
+            builder.Services.AddScoped<QuestionService>();
 
 
             builder.Services.AddMudServices();

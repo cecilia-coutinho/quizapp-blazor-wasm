@@ -5,6 +5,8 @@
 @using System.Text.Json;
 @using System.Text;
 @using Blazored.Video;
+@using BlazorQuizWASM.Shared.Services;
+@inject QuestionService _questionService;
 @inject HttpClient _http;
 @inject NavigationManager Navigation;
 
@@ -121,7 +123,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await FetchQuestions();
+        questions = await _questionService.FetchQuestionsAsync();
         question = await GetQuestionFromPath();
         InitializeCheckedDict();
         startedAt = DateTime.Now;
@@ -201,27 +203,6 @@ else
                 await UploadQuizItem();
             }
             StateHasChanged();
-        }
-    }
-
-    private async Task FetchQuestions()
-    {
-        var response = await _http.GetAsync("/api/Questions");
-
-        if (response.IsSuccessStatusCode)
-        {
-            questions = await response.Content.ReadFromJsonAsync<List<AnswersQuestionResponseDto>>();
-
-            if (questions == null)
-            {
-                errorMessage = "There was an error deserializing the response!";
-                throw new Exception($"There was an error deserializing the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
-            }
-        }
-        else
-        {
-            errorMessage = response.ReasonPhrase;
-            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}  ");
         }
     }
 

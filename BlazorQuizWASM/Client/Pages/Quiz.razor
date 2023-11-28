@@ -2,12 +2,10 @@
 @using BlazorQuizWASM.Shared.DTO;
 @using Microsoft.AspNetCore.Authorization;
 @using MudBlazor;
-@using System.Text.Json;
-@using System.Text;
 @using Blazored.Video;
 @using BlazorQuizWASM.Shared.Services;
 @inject QuestionService _questionService;
-@inject HttpClient _http;
+@inject QuizItemService _quizItemService;
 @inject NavigationManager Navigation;
 
 <MudText Color="Color.Primary"
@@ -109,7 +107,6 @@ else
 @code {
     [Parameter]
     public string? QuestionPath { get; set; }
-
     private List<AnswersQuestionResponseDto>? questions;
     private AnswersQuestionResponseDto? question;
     private string? errorMessage = "No questions here";
@@ -225,17 +222,7 @@ else
                 }
             };
 
-        var response = await _http.PostAsJsonAsync("api/QuizItems/upload", quizItemQuestionResquestDto);
-
-        if (response.IsSuccessStatusCode)
-        {
-            GoPlayQuiz();
-        }
-        else
-        {
-            errorMessage = response.ReasonPhrase;
-            throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content.ReadAsStringAsync()},  \nresponse Headers {response.Headers}");
-        }
+        await _quizItemService.UploadQuizItemAsync(quizItemQuestionResquestDto);
     }
 
     private void GoPlayQuiz()

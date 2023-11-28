@@ -1,21 +1,24 @@
 ﻿using BlazorQuizWASM.Shared.DTO;
+using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
 
 namespace BlazorQuizWASM.Shared.Services
 {
     public class QuizItemService
     {
-        private readonly HttpClient _httpClient;
+        private readonly HttpClient _http;
+        private readonly NavigationManager _navigation;
         private List<QuizItemQuestionResponseDto>? quizItems;
-
-        public QuizItemService(HttpClient httpClient)
+        private string? errorMessage = "";
+        public QuizItemService(HttpClient httpClient, NavigationManager navigation)
         {
-            _httpClient = httpClient;
+            _http = httpClient;
+            _navigation = navigation;
         }
 
         public async Task<List<QuizItemQuestionResponseDto>> FetchParticipantsAsync()
         {
-            var response = await _httpClient.GetAsync($"api/QuizItems");
+            var response = await _http.GetAsync($"api/QuizItems");
 
             if (response.IsSuccessStatusCode)
             {
@@ -31,6 +34,26 @@ namespace BlazorQuizWASM.Shared.Services
             {
                 throw new Exception($"There was an error in the response! {response.ReasonPhrase}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}");
             }
+        }
+
+        public async Task UploadQuizItemAsync(QuizItemQuestionResquestDto quizItemQuestionResquestDto)
+        {
+            var response = await _http.PostAsJsonAsync("api/QuizItems/upload", quizItemQuestionResquestDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                GoPlayQuiz();
+            }
+            else
+            {
+                errorMessage = response.ReasonPhrase;
+                throw new Exception($"There was an error in the response! {errorMessage}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content.ReadAsStringAsync()},  \nresponse Headers {response.Headers}");
+            }
+        }
+
+        private void GoPlayQuiz()
+        {
+            _navigation.NavigateTo($"playquiz");
         }
     }
 }

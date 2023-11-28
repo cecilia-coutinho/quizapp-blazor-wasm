@@ -23,26 +23,6 @@ namespace BlazorQuizWASM.Server.Controllers
             _questionRepository = questionRepository;
         }
 
-        // GET Answers By Question
-        // GET: api/Answers/answer-by-question
-        //[HttpGet]
-        //[ValidateModel]
-        //[Route("answer-by-question/{questionPath}")]
-        //[Authorize]
-        //public async Task<ActionResult> GetAnswersByQuestion(string questionPath)
-        //{
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        //    // Get question id
-        //    var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionPath, userId);
-        //    var questionId = question.QuestionId;
-
-        //    var answers = await _answerRepository.GetAnswerToQuestionAsync(questionId);
-        //    var response = answers.Select(a => new { a.Content, a.IsCorrect });
-
-        //    return Ok(response);
-        //}
-
         // CREATE Answers
         // POST: api/Answers/upload
         [HttpPost]
@@ -85,25 +65,5 @@ namespace BlazorQuizWASM.Server.Controllers
 
             return Ok(answerRequestDto);
         }
-
-        // DELETE Answer By Question and User (only a user can delete his own answers)
-        // DELETE: api/Answers/delete
-    //    [HttpDelete("delete")]
-    //    [ValidateModel]
-    //    [Authorize]
-    //    public async Task<IActionResult> DeleteAnswer([FromForm] string questionTitle, [FromForm] string answer)
-    //    {
-    //        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-    //        // get question id
-    //        var question = await _questionRepository.GetQuestionByPathAndUserAsync(questionTitle, userId);
-    //        var questionId = question.QuestionId;
-
-    //        var deleteAnswerDomainModel = await _answerRepository.DeleteAsync(answer, questionId);
-
-    //        var answerDeleted = deleteAnswerDomainModel?.Content;
-
-    //        return Ok(new { Answer = answerDeleted });
-    //    }
     }
 }

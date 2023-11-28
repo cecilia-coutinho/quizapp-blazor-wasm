@@ -88,27 +88,6 @@ namespace BlazorQuizWASM.Server.Controllers
             return Ok(userScore);
         }
 
-        // GET: api/QuizItems/participants
-        //[HttpGet]
-        //[Route("participants/{questionPath}")]
-        //[Authorize]
-        //public async Task<ActionResult> GetParticipantsPerQuestion(string questionPath)
-        //{
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        //    // Get Question Id
-        //    var question = await _questionRepository.GetQuestionByPath(questionPath);
-
-        //    if (question == null)
-        //    {
-        //        return NotFound("This question does not exist. Please check your input data and try again.");
-        //    }
-
-        //    var quizItem = await _quizItemRepository.GetParticipantsPerQuestionAsync(question.QuestionId);
-
-        //    return Ok(quizItem);
-        //}
-
         // POST: api/QuizItems/upload
         [HttpPost]
         [Route("upload")]

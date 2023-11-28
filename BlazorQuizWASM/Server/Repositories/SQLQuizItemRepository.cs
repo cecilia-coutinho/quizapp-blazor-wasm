@@ -27,30 +27,6 @@ namespace BlazorQuizWASM.Server.Repositories
             return quizItem;
         }
 
-        //public async Task<List<QuizItemResponseDto>> GetParticipantsPerQuestionAsync(Guid fkQuestionId)
-        //{
-        //    if (_context.QuizItems == null)
-        //    {
-        //        throw new Exception("Entity 'QuizItems' not found.");
-        //    }
-
-        //    var existingQuizItem = await _context.QuizItems
-        //        .Where(x => x.FkQuestionId == fkQuestionId)
-        //        .Join(_context.Users,
-        //        q => q.FkUserId,
-        //        u => u.Id,
-        //        (q, u) => new QuizItemResponseDto
-        //        {
-        //            Nickname = u.Nickname,
-        //            IsScored = q.IsScored,
-        //            TimeSpent = q.TimeSpent,
-        //            Started_At = q.Started_At
-        //        })
-        //        .ToListAsync();
-
-        //    return existingQuizItem;
-        //}
-
         public async Task<List<QuizItem>> GetScore(string fkUserId)
         {
             if (_context.QuizItems == null)

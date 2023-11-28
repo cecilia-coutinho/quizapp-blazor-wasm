@@ -27,28 +27,6 @@ namespace BlazorQuizWASM.Server.Repositories
             return answers;
         }
 
-        //public async Task<Answer?> DeleteAsync(string answer, Guid questionId)
-        //{
-        //    if (_context.Answers == null)
-        //    {
-        //        throw new Exception("Entity 'Answers' not found.");
-        //    }
-
-        //    var existingAnswer = await _context.Answers
-        //        .Where(q => q.Content == answer && q.FkQuestionId == questionId)
-        //        .FirstOrDefaultAsync();
-        //    ;
-
-        //    if (existingAnswer == null)
-        //    {
-        //        return null;
-        //    }
-
-        //    _context.Answers.Remove(existingAnswer);
-        //    await _context.SaveChangesAsync();
-        //    return existingAnswer;
-        //}
-
         public async Task<List<Answer>> GetAnswerToQuestionAsync(Guid fkQuestionId)
         {
             if (_context.Answers == null)

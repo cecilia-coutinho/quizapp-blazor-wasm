@@ -81,16 +81,9 @@ namespace BlazorQuizWASM.Server.Controllers
 
             var scores = await _quizItemRepository.GetScore(userId);
 
-            foreach (var score in scores)
-            {
-                // get only isScored == true
-                if (score.IsScored == false)
-                {
-                    scores.Remove(score);
-                }
-            }
+            var filteredScores = scores.Where(score => score.IsScored == true).ToList();
 
-            var userScore = scores.Count();
+            var userScore = filteredScores.Count();
 
             return Ok(userScore);
         }

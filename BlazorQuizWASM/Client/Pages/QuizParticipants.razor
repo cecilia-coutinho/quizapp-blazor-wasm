@@ -2,9 +2,10 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using BlazorQuizWASM.Shared.DTO
+@using BlazorQuizWASM.Shared.Services
 @attribute [Authorize]
 @inject HttpClient Http
-
+@inject QuizItemService QuizItemService
 <PageTitle>Answered Quizzes</PageTitle>
 
 <MudText Color="Color.Primary"
@@ -38,20 +39,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await FetchParticipants();
-    }
-
-    private async Task FetchParticipants()
-    {
-        var response = await Http.GetAsync($"api/QuizItems");
-
-        if (response.IsSuccessStatusCode)
-        {
-            quizItems = await response.Content.ReadFromJsonAsync<List<QuizItemQuestionResponseDto>>();
-        }
-        else
-        {
-            throw new Exception($"There was an error in the response! {response.ReasonPhrase}, \nStatusCode {response.StatusCode}, \nresponse Content {response.Content},  \nresponse Headers {response.Headers}");
-        }
+        quizItems = await QuizItemService.FetchParticipantsAsync();
     }
 }
